@@ -1,0 +1,6 @@
+# ユーザーデータ（個人のキャラクターや編成データ）
+characters.json
+formations.json
+
+# サンプルデータは除外しない
+!sample-*.json

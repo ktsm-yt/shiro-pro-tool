@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>城プロ編成ツール</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* キャラクター管理 */
+        .character-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .buff-input-area {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .buffs-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .buff-tag {
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .buff-tag button {
+            background: rgba(255,255,255,0.3);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            font-size: 10px;
+            padding: 0;
+        }
+
+        .buff-tag button:hover {
+            background: rgba(255,255,255,0.5);
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .button-group label {
+            font-size: 12px;
+            font-weight: bold;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .select-button {
+            padding: 6px 12px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .select-button:hover {
+            border-color: #667eea;
+        }
+
+        .select-button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .select-button.compact {
+            padding: 4px 10px;
+            font-size: 12px;
+            min-width: 40px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .character-grid.compact-grid {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .character-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .compact-grid .character-card {
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .character-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .character-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .compact-grid .character-card h3 {
+            font-size: 14px;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .character-card .meta {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .character-card .buffs {
+            font-size: 13px;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .delete-btn {
+            background: #ff4757;
+            padding: 5px 15px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .delete-btn:hover {
+            background: #ee5a6f;
+        }
+
+        /* 編成作成 */
+        .formation-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .formation-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .formation-slot {
+            background: white;
+            border: 3px dashed #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .formation-slot.empty {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .formation-slot.filled {
+            border: 3px solid #667eea;
+            background: #f0f3ff;
+            cursor: pointer;
+        }
+
+        .formation-slot.filled:hover {
+            background: #e5e9ff;
+            transform: scale(1.05);
+        }
+
+        .formation-slot h4 {
+            color: #667eea;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .formation-slot .meta {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+        }
+
+        .character-selection {
+            margin-bottom: 30px;
+        }
+
+        .character-selection h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .character-card.in-formation {
+            opacity: 0.6;
+            border-color: #667eea;
+            background: #e8ecff;
+        }
+
+        .character-card.in-formation:hover {
+            border-color: #ff4757;
+            opacity: 0.8;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);
+        }
+
+        .formation-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .formation-actions input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .saved-formations {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .saved-formation-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+
+        .saved-formation-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .saved-formation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .saved-formation-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .saved-formation-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .saved-formation-members {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* 棒グラフ */
+        .chart-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .bar-chart {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        .compact-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 180px;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+            overflow-x: auto;
+        }
+
+        .compact-bar-item {
+            min-width: 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+        }
+
+        .compact-bar-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .compact-bar-fill {
+            width: 100%;
+            border-radius: 3px 3px 0 0;
+            transition: height 0.5s ease;
+            position: relative;
+            min-height: 3px;
+        }
+
+        .compact-bar-value {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .compact-bar-label {
+            margin-top: 5px;
+            font-size: 9px;
+            color: #333;
+            text-align: center;
+            writing-mode: vertical-rl;
+            height: 80px;
+            overflow: hidden;
+        }
+
+        .category-divider {
+            width: 2px;
+            height: 100%;
+            background: #e0e0e0;
+            margin: 0 5px;
+        }
+
+        /* 編成比較 */
+        .comparison-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .comparison-chart-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .formation-checkbox {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .formation-checkbox:hover {
+            border-color: #667eea;
+        }
+
+        .formation-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .formation-checkbox-label {
+            flex: 1;
+        }
+
+        .formation-checkbox-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .formation-checkbox-members {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .comparison-bar-group {
+            margin-bottom: 30px;
+        }
+
+        .comparison-bar-label {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .comparison-bar {
+            margin-bottom: 10px;
+        }
+
+        .comparison-bar-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .comparison-bar-formation-name {
+            font-weight: bold;
+        }
+
+        .comparison-bar-score {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏯 城プロ編成ツール</h1>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="characters">キャラクター管理</button>
+            <button class="tab" data-tab="formation">編成作成</button>
+            <button class="tab" data-tab="comparison">編成比較</button>
+        </div>
+
+        <div id="characters" class="tab-content active">
+            <h2>キャラクター管理</h2>
+
+            <div class="character-form">
+                <h3 id="formTitle">新規キャラクター追加</h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>名前</label>
+                        <input type="text" id="charName" placeholder="例：ドレッドノート">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>期間（オプション）</label>
+                        <input type="text" id="charPeriod" placeholder="例：嫁、暁星">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>武器種</label>
+                        <input type="text" id="charWeapon" placeholder="例：軍船">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>遠近</label>
+                        <div class="button-group" style="margin-bottom: 0;">
+                            <button type="button" class="select-button compact" data-group="weaponRange" data-value="遠">遠</button>
+                            <button type="button" class="select-button compact" data-group="weaponRange" data-value="近">近</button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>物術</label>
+                        <div class="button-group" style="margin-bottom: 0;">
+                            <button type="button" class="select-button compact" data-group="weaponType" data-value="物">物</button>
+                            <button type="button" class="select-button compact" data-group="weaponType" data-value="術">術</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>属性（複数選択可）</label>
+                        <div class="button-group" style="margin-bottom: 0;">
+                            <button type="button" class="select-button compact multi-select" data-group="attribute" data-value="水">水</button>
+                            <button type="button" class="select-button compact multi-select" data-group="attribute" data-value="平">平</button>
+                            <button type="button" class="select-button compact multi-select" data-group="attribute" data-value="山">山</button>
+                            <button type="button" class="select-button compact multi-select" data-group="attribute" data-value="平山">平山</button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>配置</label>
+                        <div class="button-group" style="margin-bottom: 0;">
+                            <button type="button" class="select-button compact" data-group="placement" data-value="遠">遠</button>
+                            <button type="button" class="select-button compact" data-group="placement" data-value="近">近</button>
+                            <button type="button" class="select-button compact" data-group="placement" data-value="遠近">遠近</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 特技入力 -->
+                <div class="form-group">
+                    <label>特技</label>
+                    <div class="buff-input-area">
+                        <div class="button-group">
+                            <label>対象</label>
+                            <button type="button" class="select-button" data-group="skillTarget" data-value="自身">自身</button>
+                            <button type="button" class="select-button" data-group="skillTarget" data-value="味方射程内">味方射程内</button>
+                            <button type="button" class="select-button" data-group="skillTarget" data-value="味方全員">味方全員</button>
+                        </div>
+                        <div class="button-group">
+                            <label>バフ種</label>
+                            <button type="button" class="select-button" data-group="skillType" data-value="攻撃固定">攻撃固定</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="攻撃割合">攻撃割合</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="与ダメ">与ダメ</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="与えるダメージ">与えるダメージ</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="被ダメ">被ダメ</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="防御">防御</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="防御デバフ固定">防御デバフ固定</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="防御デバフ割合">防御デバフ割合</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="攻撃デバフ固定">攻撃デバフ固定</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="攻撃デバフ割合">攻撃デバフ割合</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="速度">速度</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="隙">隙</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="射程固定">射程固定</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="射程割合">射程割合</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="移動変更">移動変更</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="移動低下">移動低下</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="移動停止">移動停止</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="移動後退">移動後退</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="自然気">自然気</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="気(牛)">気(牛)</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="気(ノビ)">気(ノビ)</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="徐々気">徐々気</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="気軽減">気軽減</button>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="number" id="skillValue" placeholder="数値" style="width: 80px;">
+                            <select id="skillUnit" style="width: 80px;">
+                                <option value="+%">+%</option>
+                                <option value="-%">-%</option>
+                                <option value="×">×</option>
+                                <option value="+">+</option>
+                                <option value="-">-</option>
+                            </select>
+                            <input type="text" id="skillCondition" placeholder="条件（オプション）" style="flex: 1;">
+                            <button class="btn" onclick="addSkillBuff()" style="padding: 8px 15px;">追加</button>
+                        </div>
+                        <div id="skillsList" class="buffs-list"></div>
+                    </div>
+                </div>
+
+                <!-- 編成特技入力 -->
+                <div class="form-group">
+                    <label>編成特技</label>
+                    <div class="buff-input-area">
+                        <div class="button-group">
+                            <label>対象</label>
+                            <button type="button" class="select-button" data-group="formationTarget" data-value="味方全員">味方全員</button>
+                            <button type="button" class="select-button" data-group="formationTarget" data-value="味方軍船">味方軍船</button>
+                            <button type="button" class="select-button" data-group="formationTarget" data-value="味方水城">味方水城</button>
+                        </div>
+                        <div class="button-group">
+                            <label>バフ種</label>
+                            <button type="button" class="select-button" data-group="formationType" data-value="攻撃固定">攻撃固定</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="攻撃割合">攻撃割合</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="防御">防御</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="耐久">耐久</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="気">気</button>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="number" id="formationValue" placeholder="数値" style="width: 80px;">
+                            <select id="formationUnit" style="width: 80px;">
+                                <option value="+%">+%</option>
+                                <option value="+">+</option>
+                                <option value="-">-</option>
+                            </select>
+                            <input type="text" id="formationCondition" placeholder="条件（オプション）" style="flex: 1;">
+                            <button class="btn" onclick="addFormationBuff()" style="padding: 8px 15px;">追加</button>
+                        </div>
+                        <div id="formationsList" class="buffs-list"></div>
+                    </div>
+                </div>
+
+                <!-- 計略入力 -->
+                <div class="form-group">
+                    <label>計略</label>
+                    <div class="buff-input-area">
+                        <div class="button-group">
+                            <label>対象</label>
+                            <button type="button" class="select-button" data-group="strategyTarget" data-value="自身">自身</button>
+                            <button type="button" class="select-button" data-group="strategyTarget" data-value="味方射程内">味方射程内</button>
+                            <button type="button" class="select-button" data-group="strategyTarget" data-value="伏兵射程内">伏兵射程内</button>
+                        </div>
+                        <div class="button-group">
+                            <label>バフ種</label>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="攻撃固定">攻撃固定</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="攻撃割合">攻撃割合</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="与ダメ">与ダメ</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="与えるダメージ">与えるダメージ</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="被ダメ">被ダメ</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="防御">防御</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="防御デバフ固定">防御デバフ固定</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="防御デバフ割合">防御デバフ割合</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="攻撃デバフ固定">攻撃デバフ固定</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="攻撃デバフ割合">攻撃デバフ割合</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="速度">速度</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="隙">隙</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="射程固定">射程固定</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="射程割合">射程割合</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="移動変更">移動変更</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="移動低下">移動低下</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="移動停止">移動停止</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="移動後退">移動後退</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="自然気">自然気</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="気(牛)">気(牛)</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="気(ノビ)">気(ノビ)</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="徐々気">徐々気</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="気軽減">気軽減</button>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="number" id="strategyValue" placeholder="数値" style="width: 80px;">
+                            <select id="strategyUnit" style="width: 80px;">
+                                <option value="+%">+%</option>
+                                <option value="-%">-%</option>
+                                <option value="×">×</option>
+                                <option value="+">+</option>
+                                <option value="-">-</option>
+                            </select>
+                            <input type="text" id="strategyCondition" placeholder="条件（オプション）" style="flex: 1;">
+                            <button class="btn" onclick="addStrategyBuff()" style="padding: 8px 15px;">追加</button>
+                        </div>
+                        <div id="strategiesList" class="buffs-list"></div>
+                    </div>
+                </div>
+
+                <button class="btn" id="submitBtn" onclick="submitCharacter()">キャラクター追加</button>
+                <button class="btn" id="cancelEditBtn" onclick="cancelEdit()" style="background: #95a5a6; display: none; margin-left: 10px;">キャンセル</button>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                <h3>データ管理</h3>
+                <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                    <button class="btn" onclick="exportCharacters()" style="background: #43e97b;">
+                        キャラクターデータをエクスポート
+                    </button>
+                    <button class="btn" onclick="importCharacters()" style="background: #4facfe;">
+                        キャラクターデータをインポート
+                    </button>
+                    <button class="btn" onclick="exportFormations()" style="background: #fd79a8;">
+                        編成データをエクスポート
+                    </button>
+                    <button class="btn" onclick="importFormations()" style="background: #f093fb;">
+                        編成データをインポート
+                    </button>
+                    <button class="btn" onclick="exportAllData()" style="background: #667eea;">
+                        全データをエクスポート
+                    </button>
+                </div>
+                <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="handleFileSelect(event)">
+                <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                    ※ エクスポートしたデータはJSON形式でダウンロードされます<br>
+                    ※ インポートは既存データに追加されます（IDが重複する場合は上書き）
+                </p>
+            </div>
+
+            <h3>キャラクター一覧</h3>
+            <div class="character-grid" id="characterGrid"></div>
+        </div>
+
+        <div id="formation" class="tab-content">
+            <h2>編成作成</h2>
+
+            <div class="character-selection">
+                <h3>キャラクター選択（クリックで追加・削除）</h3>
+                <div class="character-grid compact-grid" id="availableCharacters"></div>
+            </div>
+
+            <div class="formation-section">
+                <h3>編成メンバー（<span id="memberCount">0</span>/8）</h3>
+                <div class="formation-grid" id="formationGrid">
+                    <div class="formation-slot empty" data-slot="0">空き</div>
+                    <div class="formation-slot empty" data-slot="1">空き</div>
+                    <div class="formation-slot empty" data-slot="2">空き</div>
+                    <div class="formation-slot empty" data-slot="3">空き</div>
+                    <div class="formation-slot empty" data-slot="4">空き</div>
+                    <div class="formation-slot empty" data-slot="5">空き</div>
+                    <div class="formation-slot empty" data-slot="6">空き</div>
+                    <div class="formation-slot empty" data-slot="7">空き</div>
+                </div>
+                <div class="formation-actions">
+                    <input type="text" id="formationName" placeholder="編成名を入力" />
+                    <button class="btn" onclick="saveFormation()">編成を保存</button>
+                    <button class="btn" onclick="clearFormation()" style="background: #ff4757;">編成をクリア</button>
+                </div>
+            </div>
+
+            <div class="chart-section">
+                <h3>編成バフ/デバフ強度</h3>
+                <div class="bar-chart" id="barChart"></div>
+            </div>
+
+            <div class="saved-formations">
+                <h3>保存した編成</h3>
+                <div id="savedFormationsList"></div>
+            </div>
+        </div>
+
+        <div id="comparison" class="tab-content">
+            <h2>編成比較</h2>
+
+            <div class="comparison-section">
+                <h3>比較する編成を選択</h3>
+                <div id="formationSelector"></div>
+            </div>
+
+            <div class="comparison-chart-section">
+                <h3>バフ/デバフ強度比較</h3>
+                <div id="comparisonChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // データ管理
+        let characters = [];
+        let currentFormation = [];
+        let savedFormations = [];
+        let selectedFormationsForComparison = [];
+
+        // バフ入力用の一時データ
+        let tempSkills = [];
+        let tempFormationSkills = [];
+        let tempStrategies = [];
+
+        // 編集モード
+        let isEditMode = false;
+        let editingCharacterId = null;
+
+        // ボタン選択の初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 全てのselect-buttonにクリックイベント
+            document.querySelectorAll('.select-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const group = this.dataset.group;
+
+                    // 複数選択可能なボタンの場合
+                    if (this.classList.contains('multi-select')) {
+                        // トグル（追加/削除）
+                        this.classList.toggle('active');
+                    } else {
+                        // 単一選択の場合
+                        // 同じグループの他のボタンから activeを削除
+                        document.querySelectorAll(`[data-group="${group}"]`).forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                        // このボタンにactiveを追加
+                        this.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // 選択された値を取得（単一選択）
+        function getSelectedValue(group) {
+            const activeButton = document.querySelector(`[data-group="${group}"].active`);
+            return activeButton ? activeButton.dataset.value : '';
+        }
+
+        // 選択された値を取得（複数選択）
+        function getSelectedValues(group) {
+            const activeButtons = document.querySelectorAll(`[data-group="${group}"].active`);
+            return Array.from(activeButtons).map(btn => btn.dataset.value);
+        }
+
+        // LocalStorageから読み込み
+        function loadData() {
+            const saved = localStorage.getItem('shiroProCharacters');
+            if (saved) {
+                characters = JSON.parse(saved);
+            } else {
+                // サンプルデータ
+                characters = [
+                    {
+                        id: 1,
+                        name: 'ドレッドノート',
+                        period: '',
+                        weapon: '軍船',
+                        weaponRange: '遠',
+                        weaponType: '物',
+                        placement: '遠',
+                        attributes: ['水'],
+                        skills: ['自身/直撃+100%', '自身/被ダメ-40%', '敵射程内/被ダメ+40%', '味方全軍船/与ダメ×1.2（水上時）'],
+                        formationSkills: ['味方軍船/耐久+10%', '味方軍船/防御+10%', '味方軍船/攻撃+10%', '巨大化気-2'],
+                        strategies: ['味方射程内/攻撃+120', '味方射程内/射程+30']
+                    },
+                    {
+                        id: 2,
+                        name: '長篠城',
+                        period: '嫁',
+                        weapon: '鉄砲',
+                        weaponRange: '遠',
+                        weaponType: '物',
+                        placement: '遠',
+                        attributes: ['平'],
+                        skills: ['味方射程内/与ダメ+40%', '敵射程内/防御-30%', '自身/与ダメ×1.3（計略中）'],
+                        formationSkills: [],
+                        strategies: ['対象/射程×1.3', '対象/攻撃隙0', '対象/攻撃+10%（累積最大140%）']
+                    },
+                    {
+                        id: 3,
+                        name: 'ヴィクトリー号',
+                        period: '',
+                        weapon: '軍船',
+                        weaponRange: '遠',
+                        weaponType: '物',
+                        placement: '遠',
+                        attributes: ['水'],
+                        skills: ['味方射程内/攻撃速度+40%', '味方射程内/隙-40%', '味方全水城/攻撃+40%', '味方全水城/与ダメ+40%', '自身/気+2（水上・敵撃破時）'],
+                        formationSkills: ['味方軍船/気+1（敵撃破時）'],
+                        strategies: ['自身/攻撃対象+3', '自身/6連続攻撃']
+                    }
+                ];
+            }
+            renderCharacters();
+            loadFormations();
+        }
+
+        // LocalStorageに保存
+        function saveData() {
+            localStorage.setItem('shiroProCharacters', JSON.stringify(characters));
+        }
+
+        // データのエクスポート/インポート機能
+        let currentImportType = 'characters'; // 'characters', 'formations', 'all'
+
+        // JSONファイルをダウンロード
+        function downloadJSON(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // キャラクターデータをエクスポート
+        function exportCharacters() {
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            downloadJSON(characters, `shiro-pro-characters-${timestamp}.json`);
+            alert('キャラクターデータをエクスポートしました');
+        }
+
+        // 編成データをエクスポート
+        function exportFormations() {
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            downloadJSON(savedFormations, `shiro-pro-formations-${timestamp}.json`);
+            alert('編成データをエクスポートしました');
+        }
+
+        // 全データをエクスポート
+        function exportAllData() {
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const allData = {
+                characters: characters,
+                formations: savedFormations,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+            downloadJSON(allData, `shiro-pro-all-data-${timestamp}.json`);
+            alert('全データをエクスポートしました');
+        }
+
+        // キャラクターデータをインポート
+        function importCharacters() {
+            currentImportType = 'characters';
+            document.getElementById('fileInput').click();
+        }
+
+        // 編成データをインポート
+        function importFormations() {
+            currentImportType = 'formations';
+            document.getElementById('fileInput').click();
+        }
+
+        // ファイル選択時の処理
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    if (currentImportType === 'characters') {
+                        importCharactersData(data);
+                    } else if (currentImportType === 'formations') {
+                        importFormationsData(data);
+                    }
+
+                    // ファイル入力をリセット
+                    event.target.value = '';
+                } catch (error) {
+                    alert('ファイルの読み込みに失敗しました: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // キャラクターデータのインポート処理
+        function importCharactersData(data) {
+            let importedData = [];
+
+            // 全データフォーマットの場合
+            if (data.characters && Array.isArray(data.characters)) {
+                importedData = data.characters;
+            }
+            // キャラクター配列の場合
+            else if (Array.isArray(data)) {
+                importedData = data;
+            }
+            else {
+                alert('無効なデータ形式です');
+                return;
+            }
+
+            // データのマージ（IDが重複する場合は上書き）
+            importedData.forEach(newChar => {
+                const existingIndex = characters.findIndex(c => c.id === newChar.id);
+                if (existingIndex >= 0) {
+                    characters[existingIndex] = newChar;
+                } else {
+                    characters.push(newChar);
+                }
+            });
+
+            saveData();
+            renderCharacters();
+            alert(`${importedData.length}件のキャラクターをインポートしました`);
+        }
+
+        // 編成データのインポート処理
+        function importFormationsData(data) {
+            let importedData = [];
+
+            // 全データフォーマットの場合
+            if (data.formations && Array.isArray(data.formations)) {
+                importedData = data.formations;
+            }
+            // 編成配列の場合
+            else if (Array.isArray(data)) {
+                importedData = data;
+            }
+            else {
+                alert('無効なデータ形式です');
+                return;
+            }
+
+            // データのマージ（IDが重複する場合は上書き）
+            importedData.forEach(newFormation => {
+                const existingIndex = savedFormations.findIndex(f => f.id === newFormation.id);
+                if (existingIndex >= 0) {
+                    savedFormations[existingIndex] = newFormation;
+                } else {
+                    savedFormations.push(newFormation);
+                }
+            });
+
+            saveFormationsData();
+            renderSavedFormations();
+            alert(`${importedData.length}件の編成をインポートしました`);
+        }
+
+        // 編成をLocalStorageから読み込み
+        function loadFormations() {
+            const saved = localStorage.getItem('shiroProFormations');
+            if (saved) {
+                savedFormations = JSON.parse(saved);
+            }
+            renderSavedFormations();
+        }
+
+        // 編成をLocalStorageに保存
+        function saveFormationsData() {
+            localStorage.setItem('shiroProFormations', JSON.stringify(savedFormations));
+        }
+
+        // バフ追加機能
+        function addSkillBuff() {
+            const target = getSelectedValue('skillTarget');
+            const type = getSelectedValue('skillType');
+            const value = document.getElementById('skillValue').value;
+            const unit = document.getElementById('skillUnit').value;
+            const condition = document.getElementById('skillCondition').value.trim();
+
+            if (!target || !type || !value) {
+                alert('全ての項目を選択・入力してください');
+                return;
+            }
+
+            const buffText = condition
+                ? `${target}/${type}${unit}${value}（${condition}）`
+                : `${target}/${type}${unit}${value}`;
+            tempSkills.push(buffText);
+            renderBuffsList('skillsList', tempSkills, 'skill');
+        }
+
+        function addFormationBuff() {
+            const target = getSelectedValue('formationTarget');
+            const type = getSelectedValue('formationType');
+            const value = document.getElementById('formationValue').value;
+            const unit = document.getElementById('formationUnit').value;
+            const condition = document.getElementById('formationCondition').value.trim();
+
+            if (!target || !type || !value) {
+                alert('全ての項目を選択・入力してください');
+                return;
+            }
+
+            const buffText = condition
+                ? `${target}/${type}${unit}${value}（${condition}）`
+                : `${target}/${type}${unit}${value}`;
+            tempFormationSkills.push(buffText);
+            renderBuffsList('formationsList', tempFormationSkills, 'formation');
+        }
+
+        function addStrategyBuff() {
+            const target = getSelectedValue('strategyTarget');
+            const type = getSelectedValue('strategyType');
+            const value = document.getElementById('strategyValue').value;
+            const unit = document.getElementById('strategyUnit').value;
+            const condition = document.getElementById('strategyCondition').value.trim();
+
+            if (!target || !type || !value) {
+                alert('全ての項目を選択・入力してください');
+                return;
+            }
+
+            const buffText = condition
+                ? `${target}/${type}${unit}${value}（${condition}）`
+                : `${target}/${type}${unit}${value}`;
+            tempStrategies.push(buffText);
+            renderBuffsList('strategiesList', tempStrategies, 'strategy');
+        }
+
+        function renderBuffsList(containerId, buffs, type) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            buffs.forEach((buff, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'buff-tag';
+                tag.innerHTML = `
+                    <span>${buff}</span>
+                    <button onclick="removeBuff('${type}', ${index})">×</button>
+                `;
+                container.appendChild(tag);
+            });
+        }
+
+        function removeBuff(type, index) {
+            if (type === 'skill') {
+                tempSkills.splice(index, 1);
+                renderBuffsList('skillsList', tempSkills, 'skill');
+            } else if (type === 'formation') {
+                tempFormationSkills.splice(index, 1);
+                renderBuffsList('formationsList', tempFormationSkills, 'formation');
+            } else if (type === 'strategy') {
+                tempStrategies.splice(index, 1);
+                renderBuffsList('strategiesList', tempStrategies, 'strategy');
+            }
+        }
+
+        // キャラクター追加・更新
+        function submitCharacter() {
+            const name = document.getElementById('charName').value.trim();
+            const period = document.getElementById('charPeriod').value.trim();
+            const weapon = document.getElementById('charWeapon').value.trim();
+            const weaponRange = getSelectedValue('weaponRange');
+            const weaponType = getSelectedValue('weaponType');
+            const placement = getSelectedValue('placement');
+            const attributes = getSelectedValues('attribute');
+
+            if (!name) {
+                alert('名前を入力してください');
+                return;
+            }
+
+            if (isEditMode) {
+                // 編集モード：既存キャラを更新
+                const char = characters.find(c => c.id === editingCharacterId);
+                if (char) {
+                    char.name = name;
+                    char.period = period;
+                    char.weapon = weapon;
+                    char.weaponRange = weaponRange;
+                    char.weaponType = weaponType;
+                    char.placement = placement;
+                    char.attributes = attributes;
+                    char.skills = [...tempSkills];
+                    char.formationSkills = [...tempFormationSkills];
+                    char.strategies = [...tempStrategies];
+                }
+                isEditMode = false;
+                editingCharacterId = null;
+            } else {
+                // 新規追加モード
+                const newChar = {
+                    id: Date.now(),
+                    name,
+                    period,
+                    weapon,
+                    weaponRange,
+                    weaponType,
+                    placement,
+                    attributes,
+                    skills: [...tempSkills],
+                    formationSkills: [...tempFormationSkills],
+                    strategies: [...tempStrategies]
+                };
+                characters.push(newChar);
+            }
+
+            saveData();
+            renderCharacters();
+            clearForm();
+        }
+
+        // フォームをクリア
+        function clearForm() {
+            document.getElementById('charName').value = '';
+            document.getElementById('charPeriod').value = '';
+            document.getElementById('charWeapon').value = '';
+
+            // 条件入力欄をクリア
+            document.getElementById('skillValue').value = '';
+            document.getElementById('skillCondition').value = '';
+            document.getElementById('formationValue').value = '';
+            document.getElementById('formationCondition').value = '';
+            document.getElementById('strategyValue').value = '';
+            document.getElementById('strategyCondition').value = '';
+
+            // バフリストクリア
+            tempSkills = [];
+            tempFormationSkills = [];
+            tempStrategies = [];
+            renderBuffsList('skillsList', tempSkills, 'skill');
+            renderBuffsList('formationsList', tempFormationSkills, 'formation');
+            renderBuffsList('strategiesList', tempStrategies, 'strategy');
+
+            // 全てのボタンの選択を解除
+            document.querySelectorAll('.select-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // フォームタイトルとボタンを元に戻す
+            document.getElementById('formTitle').textContent = '新規キャラクター追加';
+            document.getElementById('submitBtn').textContent = 'キャラクター追加';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+
+            isEditMode = false;
+            editingCharacterId = null;
+        }
+
+        // 編集モードに入る
+        function editCharacter(id) {
+            const char = characters.find(c => c.id === id);
+            if (!char) return;
+
+            isEditMode = true;
+            editingCharacterId = id;
+
+            // フォームにデータを読み込む
+            document.getElementById('charName').value = char.name;
+            document.getElementById('charPeriod').value = char.period || '';
+            document.getElementById('charWeapon').value = char.weapon;
+
+            // ボタンの選択状態を復元
+            document.querySelectorAll('.select-button').forEach(btn => btn.classList.remove('active'));
+            if (char.weaponRange) {
+                const rangeBtn = document.querySelector(`[data-group="weaponRange"][data-value="${char.weaponRange}"]`);
+                if (rangeBtn) rangeBtn.classList.add('active');
+            }
+            if (char.weaponType) {
+                const typeBtn = document.querySelector(`[data-group="weaponType"][data-value="${char.weaponType}"]`);
+                if (typeBtn) typeBtn.classList.add('active');
+            }
+            if (char.placement) {
+                const placementBtn = document.querySelector(`[data-group="placement"][data-value="${char.placement}"]`);
+                if (placementBtn) placementBtn.classList.add('active');
+            }
+            // 属性ボタンの選択状態を復元（複数選択）
+            const attributes = char.attributes || (char.attribute ? [char.attribute] : []); // 後方互換性
+            attributes.forEach(attr => {
+                const attrBtn = document.querySelector(`[data-group="attribute"][data-value="${attr}"]`);
+                if (attrBtn) attrBtn.classList.add('active');
+            });
+
+            // バフリストを読み込む
+            tempSkills = [...char.skills];
+            tempFormationSkills = [...char.formationSkills];
+            tempStrategies = [...char.strategies];
+            renderBuffsList('skillsList', tempSkills, 'skill');
+            renderBuffsList('formationsList', tempFormationSkills, 'formation');
+            renderBuffsList('strategiesList', tempStrategies, 'strategy');
+
+            // フォームタイトルとボタンを変更
+            document.getElementById('formTitle').textContent = `「${char.name}」を編集`;
+            document.getElementById('submitBtn').textContent = 'キャラクター更新';
+            document.getElementById('cancelEditBtn').style.display = 'inline-block';
+
+            // フォームまでスクロール
+            document.querySelector('.character-form').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 編集をキャンセル
+        function cancelEdit() {
+            clearForm();
+        }
+
+        // キャラクター削除
+        function deleteCharacter(id) {
+            if (confirm('このキャラクターを削除しますか？')) {
+                characters = characters.filter(c => c.id !== id);
+                saveData();
+                renderCharacters();
+            }
+        }
+
+        // キャラクター一覧を表示
+        function renderCharacters() {
+            const grid = document.getElementById('characterGrid');
+            grid.innerHTML = '';
+
+            characters.forEach(char => {
+                const card = document.createElement('div');
+                card.className = 'character-card';
+                const weaponInfo = `${char.weapon || ''}${char.weaponRange ? ` (${char.weaponRange}${char.weaponType ? '/' + char.weaponType : ''})` : ''}`;
+                const placementInfo = char.placement ? ` [${char.placement}]` : '';
+                const attributeInfo = char.attributes ? char.attributes.join('・') : (char.attribute || ''); // 後方互換性
+                card.innerHTML = `
+                    <h3>${char.period ? `[${char.period}] ` : ''}${char.name}</h3>
+                    <div class="meta">
+                        ${weaponInfo}${placementInfo} | ${attributeInfo}
+                    </div>
+                    <div class="buffs">
+                        <strong>特技:</strong><br>
+                        ${char.skills.slice(0, 2).join('<br>')}
+                        ${char.skills.length > 2 ? '<br>...' : ''}
+                    </div>
+                    <button class="btn" onclick="editCharacter(${char.id}); event.stopPropagation();" style="padding: 5px 15px; font-size: 12px; margin-top: 10px; background: #43e97b;">編集</button>
+                    <button class="btn delete-btn" onclick="deleteCharacter(${char.id}); event.stopPropagation();" style="padding: 5px 15px; font-size: 12px;">削除</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // 編成管理
+        function addToFormation(charId) {
+            if (currentFormation.length >= 8) {
+                alert('編成は8人までです');
+                return;
+            }
+
+            if (currentFormation.includes(charId)) {
+                alert('このキャラクターは既に編成に含まれています');
+                return;
+            }
+
+            currentFormation.push(charId);
+            renderFormation();
+            renderAvailableCharacters();
+        }
+
+        function removeFromFormation(charId) {
+            currentFormation = currentFormation.filter(id => id !== charId);
+            renderFormation();
+            renderAvailableCharacters();
+        }
+
+        function renderFormation() {
+            const slots = document.querySelectorAll('.formation-slot');
+
+            slots.forEach((slot, index) => {
+                if (currentFormation[index]) {
+                    const char = characters.find(c => c.id === currentFormation[index]);
+                    if (char) {
+                        const weaponInfo = `${char.weapon || ''}${char.weaponRange ? ` (${char.weaponRange}${char.weaponType ? '/' + char.weaponType : ''})` : ''}`;
+                        const placementInfo = char.placement ? ` [${char.placement}]` : '';
+                        const attributeInfo = char.attributes ? char.attributes.join('・') : (char.attribute || '');
+                        slot.className = 'formation-slot filled';
+                        slot.innerHTML = `
+                            <h4>${char.period ? `[${char.period}] ` : ''}${char.name}</h4>
+                            <div class="meta">
+                                ${weaponInfo}${placementInfo}<br>${attributeInfo}
+                            </div>
+                        `;
+                        slot.onclick = () => removeFromFormation(char.id);
+                    }
+                } else {
+                    slot.className = 'formation-slot empty';
+                    slot.innerHTML = '空き';
+                    slot.onclick = null;
+                }
+            });
+
+            document.getElementById('memberCount').textContent = currentFormation.length;
+            renderBarChart();
+        }
+
+        // 数値を抽出する関数
+        function extractBuffValue(effect) {
+            // ×形式（倍率）
+            if (effect.includes('×')) {
+                const match = effect.match(/×(\d+\.?\d*)/);
+                if (match) {
+                    const value = parseFloat(match[1]);
+                    return { value: value, display: `×${value}`, numeric: value * 100 }; // 比較用に100倍
+                }
+            }
+            // %形式
+            if (effect.includes('%')) {
+                const match = effect.match(/([+-]?\d+)%/);
+                if (match) {
+                    const value = parseInt(match[1]);
+                    return { value: value, display: `${value > 0 ? '+' : ''}${value}%`, numeric: Math.abs(value) };
+                }
+            }
+            // 固定値形式
+            const match = effect.match(/([+-]?\d+)/);
+            if (match) {
+                const value = parseInt(match[1]);
+                return { value: value, display: `${value > 0 ? '+' : ''}${value}`, numeric: Math.abs(value) };
+            }
+            return null;
+        }
+
+        // バフ/デバフを詳細に集計（実際の数値）
+        function calculateDetailedBuffScores() {
+            const formationChars = currentFormation.map(id => characters.find(c => c.id === id)).filter(c => c);
+
+            const scores = {
+                '気管理': {
+                    '自然気': { value: null, display: '-', numeric: 0 },
+                    '気（牛）': { value: null, display: '-', numeric: 0 },
+                    '気（ノビ）': { value: null, display: '-', numeric: 0 },
+                    '徐々気': { value: null, display: '-', numeric: 0 },
+                    '気軽減': { value: null, display: '-', numeric: 0 }
+                },
+                '速度': {
+                    '速度バフ': { value: null, display: '-', numeric: 0 },
+                    '速度デバフ': { value: null, display: '-', numeric: 0 },
+                    '隙短縮': { value: null, display: '-', numeric: 0 },
+                    '隙増加': { value: null, display: '-', numeric: 0 }
+                },
+                '計略': {
+                    '計略短縮': { value: null, display: '-', numeric: 0 }
+                },
+                '移動速度': {
+                    '移動変更': { value: null, display: '-', numeric: 0 },
+                    '移動低下': { value: null, display: '-', numeric: 0 },
+                    '移動停止': { value: null, display: '-', numeric: 0 },
+                    '移動後退': { value: null, display: '-', numeric: 0 }
+                },
+                '射程': {
+                    '射程固定': { value: null, display: '-', numeric: 0, isFixed: true },
+                    '射程割合': { value: null, display: '-', numeric: 0 },
+                    '射程デバフ': { value: null, display: '-', numeric: 0 }
+                },
+                '攻撃系': {
+                    '攻撃固定': { value: null, display: '-', numeric: 0, isFixed: true },
+                    '攻撃割合': { value: null, display: '-', numeric: 0 },
+                    '与ダメバフ': { value: null, display: '-', numeric: 0 },
+                    '与えるダメージバフ': { value: null, display: '-', numeric: 0 },
+                    '被ダメバフ': { value: null, display: '-', numeric: 0 },
+                    '重複バフ': { value: null, display: '-', numeric: 0 },
+                    '防御無視': { value: null, display: '-', numeric: 0 },
+                    '防御デバフ固定': { value: null, display: '-', numeric: 0, isFixed: true },
+                    '防御デバフ割合': { value: null, display: '-', numeric: 0 }
+                },
+                '防御系': {
+                    '被ダメ軽減': { value: null, display: '-', numeric: 0 },
+                    '与ダメデバフ': { value: null, display: '-', numeric: 0 },
+                    '防御バフ': { value: null, display: '-', numeric: 0 },
+                    '攻撃デバフ固定': { value: null, display: '-', numeric: 0, isFixed: true },
+                    '攻撃デバフ割合': { value: null, display: '-', numeric: 0 }
+                }
+            };
+
+            function updateMax(category, item, newValue) {
+                if (!newValue) return;
+                const current = scores[category][item];
+
+                // 固定値バフは加算
+                if (current.isFixed) {
+                    const totalValue = (current.value || 0) + newValue.value;
+                    const totalNumeric = (current.numeric || 0) + newValue.numeric;
+                    scores[category][item] = {
+                        value: totalValue,
+                        display: totalValue > 0 ? `+${totalValue}` : `${totalValue}`,
+                        numeric: totalNumeric,
+                        isFixed: true
+                    };
+                } else {
+                    // 割合バフは最大値を採用
+                    if (current.value === null || newValue.numeric > current.numeric) {
+                        scores[category][item] = { ...newValue, isFixed: false };
+                    }
+                }
+            }
+
+            formationChars.forEach(char => {
+                const allEffects = [...char.skills, ...char.formationSkills, ...char.strategies];
+
+                allEffects.forEach(effect => {
+                    // 気管理
+                    if (effect.includes('気-')) {
+                        updateMax('気管理', '気軽減', extractBuffValue(effect));
+                    }
+                    if (effect.includes('気+') && effect.includes('撃破')) {
+                        const val = extractBuffValue(effect);
+                        if (val && val.value === 2) updateMax('気管理', '気（牛）', val);
+                        else if (val && val.value === 1) updateMax('気管理', '気（ノビ）', val);
+                    }
+
+                    // 速度
+                    if (effect.includes('攻撃速度+') || (effect.includes('速度+') && !effect.includes('移動'))) {
+                        updateMax('速度', '速度バフ', extractBuffValue(effect));
+                    }
+                    if (effect.includes('隙-')) {
+                        updateMax('速度', '隙短縮', extractBuffValue(effect));
+                    }
+                    if (effect.includes('攻撃隙0')) {
+                        updateMax('速度', '隙短縮', { value: 100, display: '隙0', numeric: 100 });
+                    }
+
+                    // 射程
+                    if (effect.includes('射程固定')) {
+                        updateMax('射程', '射程固定', extractBuffValue(effect));
+                    } else if (effect.includes('射程割合')) {
+                        updateMax('射程', '射程割合', extractBuffValue(effect));
+                    } else if (effect.includes('射程×')) {
+                        updateMax('射程', '射程割合', extractBuffValue(effect));
+                    } else if (effect.includes('射程-')) {
+                        updateMax('射程', '射程デバフ', extractBuffValue(effect));
+                    } else if (effect.includes('射程+')) {
+                        updateMax('射程', '射程固定', extractBuffValue(effect));
+                    }
+
+                    // 攻撃系
+                    if (effect.includes('攻撃固定')) {
+                        updateMax('攻撃系', '攻撃固定', extractBuffValue(effect));
+                    } else if (effect.includes('攻撃割合')) {
+                        updateMax('攻撃系', '攻撃割合', extractBuffValue(effect));
+                    } else if (effect.includes('攻撃+')) {
+                        updateMax('攻撃系', '攻撃固定', extractBuffValue(effect));
+                    } else if (effect.includes('攻撃×')) {
+                        updateMax('攻撃系', '攻撃割合', extractBuffValue(effect));
+                    }
+                    // 「与えるダメージ」が先にチェック（より具体的な方を先に）
+                    if (effect.includes('与えるダメージ')) {
+                        updateMax('攻撃系', '与えるダメージバフ', extractBuffValue(effect));
+                    } else if (effect.includes('与ダメ-')) {
+                        updateMax('防御系', '与ダメデバフ', extractBuffValue(effect));
+                    } else if (effect.includes('与ダメ')) {
+                        updateMax('攻撃系', '与ダメバフ', extractBuffValue(effect));
+                    }
+                    if (effect.includes('被ダメ+') || effect.includes('被ダメ×')) {
+                        updateMax('攻撃系', '被ダメバフ', extractBuffValue(effect));
+                    }
+                    // 防御デバフ
+                    if (effect.includes('防御デバフ固定')) {
+                        updateMax('攻撃系', '防御デバフ固定', extractBuffValue(effect));
+                    } else if (effect.includes('防御デバフ割合')) {
+                        updateMax('攻撃系', '防御デバフ割合', extractBuffValue(effect));
+                    } else if (effect.includes('防御-') && effect.includes('%')) {
+                        updateMax('攻撃系', '防御デバフ割合', extractBuffValue(effect));
+                    } else if (effect.includes('防御-')) {
+                        updateMax('攻撃系', '防御デバフ固定', extractBuffValue(effect));
+                    }
+
+                    // 防御系
+                    if (effect.includes('被ダメ-')) {
+                        updateMax('防御系', '被ダメ軽減', extractBuffValue(effect));
+                    }
+                    if (effect.includes('防御+') || effect.includes('防御×')) {
+                        updateMax('防御系', '防御バフ', extractBuffValue(effect));
+                    }
+                    // 攻撃デバフ
+                    if (effect.includes('攻撃デバフ固定')) {
+                        updateMax('防御系', '攻撃デバフ固定', extractBuffValue(effect));
+                    } else if (effect.includes('攻撃デバフ割合')) {
+                        updateMax('防御系', '攻撃デバフ割合', extractBuffValue(effect));
+                    }
+
+                    // 移動速度
+                    if (effect.includes('移動変更')) {
+                        updateMax('移動速度', '移動変更', extractBuffValue(effect));
+                    }
+                    if (effect.includes('移動低下')) {
+                        updateMax('移動速度', '移動低下', extractBuffValue(effect));
+                    }
+                    if (effect.includes('移動停止')) {
+                        updateMax('移動速度', '移動停止', { value: 100, display: '停止', numeric: 100 });
+                    }
+                    if (effect.includes('移動後退')) {
+                        updateMax('移動速度', '移動後退', extractBuffValue(effect));
+                    }
+                });
+            });
+
+            return scores;
+        }
+
+        function renderBarChart() {
+            const chartDiv = document.getElementById('barChart');
+
+            if (currentFormation.length === 0) {
+                chartDiv.innerHTML = '<p style="color: #999; text-align: center;">編成メンバーを追加すると、バフ/デバフ強度が表示されます</p>';
+                return;
+            }
+
+            const scores = calculateDetailedBuffScores();
+            chartDiv.innerHTML = '';
+
+            // カテゴリごとの色定義
+            const categoryColors = {
+                '気管理': '#4facfe',
+                '速度': '#43e97b',
+                '計略': '#9b59b6',
+                '移動速度': '#f39c12',
+                '射程': '#e74c3c',
+                '攻撃系': '#fd79a8',
+                '防御系': '#95a5a6'
+            };
+
+            // 凡例を作成
+            const legend = document.createElement('div');
+            legend.className = 'chart-legend';
+            Object.entries(categoryColors).forEach(([category, color]) => {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.innerHTML = `
+                    <div class="legend-color" style="background: ${color}"></div>
+                    <span>${category}</span>
+                `;
+                legend.appendChild(item);
+            });
+            chartDiv.appendChild(legend);
+
+            // 全てのバフを1つのコンパクトな棒グラフに表示
+            const barsContainer = document.createElement('div');
+            barsContainer.className = 'compact-bars';
+
+            // 統一基準値（全カテゴリ共通）
+            const maxBaseValue = 100;
+
+            Object.entries(scores).forEach(([category, items], catIndex) => {
+                // カテゴリの区切り線（最初以外）
+                if (catIndex > 0) {
+                    const divider = document.createElement('div');
+                    divider.className = 'category-divider';
+                    barsContainer.appendChild(divider);
+                }
+
+                Object.entries(items).forEach(([itemName, buffData]) => {
+                    // 固定値バフは除外
+                    if (buffData.isFixed) return;
+
+                    const barItem = document.createElement('div');
+                    barItem.className = 'compact-bar-item';
+
+                    // 統一基準値（100）に対する割合
+                    const height = buffData.numeric > 0 ? Math.min((buffData.numeric / maxBaseValue) * 100, 100) : 0;
+                    const color = categoryColors[category];
+
+                    barItem.innerHTML = `
+                        <div class="compact-bar-container">
+                            <div class="compact-bar-fill" style="height: ${height}%; background: ${color}">
+                                <div class="compact-bar-value" style="color: ${color}">${buffData.display}</div>
+                            </div>
+                        </div>
+                        <div class="compact-bar-label">${itemName}</div>
+                    `;
+
+                    barsContainer.appendChild(barItem);
+                });
+            });
+
+            chartDiv.appendChild(barsContainer);
+
+            // 固定値バフの合計を別表示
+            const fixedValuesDiv = document.createElement('div');
+            fixedValuesDiv.style.cssText = 'margin-top: 30px; padding: 20px; background: white; border-radius: 10px; border: 2px solid #e0e0e0;';
+
+            let hasFixedValues = false;
+            let fixedValuesHTML = '<h4 style="margin-bottom: 15px; color: #667eea;">固定値バフ合計</h4><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">';
+
+            Object.entries(scores).forEach(([category, items]) => {
+                Object.entries(items).forEach(([itemName, buffData]) => {
+                    if (buffData.isFixed && buffData.numeric > 0) {
+                        hasFixedValues = true;
+                        const color = categoryColors[category];
+                        fixedValuesHTML += `
+                            <div style="padding: 10px; background: ${color}20; border-left: 4px solid ${color}; border-radius: 5px;">
+                                <div style="font-size: 12px; color: #666; margin-bottom: 3px;">${itemName}</div>
+                                <div style="font-size: 18px; font-weight: bold; color: ${color};">${buffData.display}</div>
+                            </div>
+                        `;
+                    }
+                });
+            });
+
+            fixedValuesHTML += '</div>';
+
+            if (hasFixedValues) {
+                fixedValuesDiv.innerHTML = fixedValuesHTML;
+                chartDiv.appendChild(fixedValuesDiv);
+            }
+        }
+
+        function renderAvailableCharacters() {
+            const grid = document.getElementById('availableCharacters');
+            grid.innerHTML = '';
+
+            characters.forEach(char => {
+                const card = document.createElement('div');
+                const isInFormation = currentFormation.includes(char.id);
+                card.className = 'character-card' + (isInFormation ? ' in-formation' : '');
+
+                // コンパクト表示（名前のみ）
+                card.innerHTML = `
+                    <h3>${char.period ? `[${char.period}] ` : ''}${char.name}</h3>
+                `;
+
+                // クリックで追加・削除をトグル
+                if (isInFormation) {
+                    card.onclick = () => removeFromFormation(char.id);
+                    card.style.cursor = 'pointer';
+                } else {
+                    card.onclick = () => addToFormation(char.id);
+                }
+
+                grid.appendChild(card);
+            });
+        }
+
+        // 編成保存
+        function saveFormation() {
+            if (currentFormation.length === 0) {
+                alert('編成にキャラクターを追加してください');
+                return;
+            }
+
+            const name = document.getElementById('formationName').value.trim();
+            if (!name) {
+                alert('編成名を入力してください');
+                return;
+            }
+
+            const formation = {
+                id: Date.now(),
+                name: name,
+                members: [...currentFormation]
+            };
+
+            savedFormations.push(formation);
+            saveFormationsData();
+            renderSavedFormations();
+
+            document.getElementById('formationName').value = '';
+            alert('編成を保存しました');
+        }
+
+        // 編成クリア
+        function clearFormation() {
+            if (confirm('現在の編成をクリアしますか？')) {
+                currentFormation = [];
+                renderFormation();
+                renderAvailableCharacters();
+            }
+        }
+
+        // 保存した編成を表示
+        function renderSavedFormations() {
+            const list = document.getElementById('savedFormationsList');
+            list.innerHTML = '';
+
+            if (savedFormations.length === 0) {
+                list.innerHTML = '<p style="color: #999; text-align: center;">保存した編成はありません</p>';
+                return;
+            }
+
+            savedFormations.forEach(formation => {
+                const card = document.createElement('div');
+                card.className = 'saved-formation-card';
+
+                const memberNames = formation.members
+                    .map(id => {
+                        const char = characters.find(c => c.id === id);
+                        return char ? (char.period ? `[${char.period}] ${char.name}` : char.name) : '不明';
+                    })
+                    .join('、');
+
+                card.innerHTML = `
+                    <div class="saved-formation-header">
+                        <div class="saved-formation-name">${formation.name}</div>
+                        <div class="saved-formation-actions">
+                            <button class="btn" onclick="loadFormation(${formation.id})" style="padding: 5px 15px; font-size: 12px;">読込</button>
+                            <button class="btn delete-btn" onclick="deleteSavedFormation(${formation.id})" style="padding: 5px 15px; font-size: 12px;">削除</button>
+                        </div>
+                    </div>
+                    <div class="saved-formation-members">
+                        メンバー（${formation.members.length}）: ${memberNames}
+                    </div>
+                `;
+
+                list.appendChild(card);
+            });
+        }
+
+        // 編成をロード
+        function loadFormation(id) {
+            const formation = savedFormations.find(f => f.id === id);
+            if (formation) {
+                currentFormation = [...formation.members];
+                renderFormation();
+                renderAvailableCharacters();
+            }
+        }
+
+        // 保存した編成を削除
+        function deleteSavedFormation(id) {
+            if (confirm('この編成を削除しますか？')) {
+                savedFormations = savedFormations.filter(f => f.id !== id);
+                saveFormationsData();
+                renderSavedFormations();
+            }
+        }
+
+        // 編成比較機能
+        function renderFormationSelector() {
+            const selector = document.getElementById('formationSelector');
+            selector.innerHTML = '';
+
+            if (savedFormations.length === 0) {
+                selector.innerHTML = '<p style="color: #999; text-align: center;">保存した編成がありません。先に編成を保存してください。</p>';
+                return;
+            }
+
+            savedFormations.forEach(formation => {
+                const checkbox = document.createElement('div');
+                checkbox.className = 'formation-checkbox';
+
+                const memberNames = formation.members
+                    .map(id => {
+                        const char = characters.find(c => c.id === id);
+                        return char ? (char.period ? `[${char.period}] ${char.name}` : char.name) : '不明';
+                    })
+                    .join('、');
+
+                const isChecked = selectedFormationsForComparison.includes(formation.id);
+
+                checkbox.innerHTML = `
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleFormationComparison(${formation.id})">
+                    <div class="formation-checkbox-label">
+                        <div class="formation-checkbox-name">${formation.name}</div>
+                        <div class="formation-checkbox-members">メンバー（${formation.members.length}）: ${memberNames}</div>
+                    </div>
+                `;
+
+                selector.appendChild(checkbox);
+            });
+        }
+
+        function toggleFormationComparison(formationId) {
+            if (selectedFormationsForComparison.includes(formationId)) {
+                selectedFormationsForComparison = selectedFormationsForComparison.filter(id => id !== formationId);
+            } else {
+                selectedFormationsForComparison.push(formationId);
+            }
+            renderComparisonChart();
+        }
+
+        function renderComparisonChart() {
+            const chartDiv = document.getElementById('comparisonChart');
+            chartDiv.innerHTML = '';
+
+            if (selectedFormationsForComparison.length === 0) {
+                chartDiv.innerHTML = '<p style="color: #999; text-align: center;">編成を選択すると、比較チャートが表示されます</p>';
+                return;
+            }
+
+            // 各編成のスコアを計算
+            const formationScores = selectedFormationsForComparison.map(formationId => {
+                const formation = savedFormations.find(f => f.id === formationId);
+                if (!formation) return null;
+
+                const tempFormation = currentFormation;
+                currentFormation = formation.members;
+                const scores = calculateDetailedBuffScores();
+                currentFormation = tempFormation;
+
+                return {
+                    name: formation.name,
+                    scores: scores
+                };
+            }).filter(f => f !== null);
+
+            // カテゴリごとの色定義
+            const categoryColors = {
+                '気管理': '#4facfe',
+                '速度': '#43e97b',
+                '計略': '#9b59b6',
+                '移動速度': '#f39c12',
+                '射程': '#e74c3c',
+                '攻撃系': '#fd79a8',
+                '防御系': '#95a5a6'
+            };
+
+            // 編成ごとの色
+            const formationColors = ['#667eea', '#f093fb', '#4facfe', '#43e97b'];
+
+            // 凡例を作成
+            const legend = document.createElement('div');
+            legend.className = 'chart-legend';
+
+            // カテゴリ凡例
+            Object.entries(categoryColors).forEach(([category, color]) => {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.innerHTML = `
+                    <div class="legend-color" style="background: ${color}"></div>
+                    <span>${category}</span>
+                `;
+                legend.appendChild(item);
+            });
+
+            // 編成凡例
+            formationScores.forEach((formation, index) => {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.innerHTML = `
+                    <div class="legend-color" style="background: ${formationColors[index]}; border: 2px solid ${formationColors[index]}"></div>
+                    <span>${formation.name}</span>
+                `;
+                legend.appendChild(item);
+            });
+
+            chartDiv.appendChild(legend);
+
+            // 全てのバフを1つのコンパクトな比較チャートに表示
+            const categories = Object.keys(formationScores[0].scores);
+
+            // 統一基準値（全カテゴリ共通）
+            const maxBaseValue = 100;
+
+            categories.forEach((category, catIndex) => {
+                if (catIndex > 0) {
+                    const divider = document.createElement('div');
+                    divider.style.height = '2px';
+                    divider.style.background = '#e0e0e0';
+                    divider.style.margin = '30px 0';
+                    chartDiv.appendChild(divider);
+                }
+
+                const items = Object.keys(formationScores[0].scores[category]);
+                const barsContainer = document.createElement('div');
+                barsContainer.className = 'compact-bars';
+                barsContainer.style.height = '150px';
+
+                items.forEach((itemName, itemIndex) => {
+                    // 項目間の区切り
+                    if (itemIndex > 0) {
+                        const divider = document.createElement('div');
+                        divider.className = 'category-divider';
+                        barsContainer.appendChild(divider);
+                    }
+
+                    // 固定値バフは除外
+                    const firstBuffData = formationScores[0].scores[category][itemName];
+                    if (firstBuffData.isFixed) return;
+
+                    formationScores.forEach((formation, formIndex) => {
+                        const buffData = formation.scores[category][itemName];
+                        // 統一基準値（100）に対する割合
+                        const height = buffData.numeric > 0 ? Math.min((buffData.numeric / maxBaseValue) * 100, 100) : 0;
+                        const color = formationColors[formIndex];
+
+                        const barItem = document.createElement('div');
+                        barItem.className = 'compact-bar-item';
+                        barItem.innerHTML = `
+                            <div class="compact-bar-container">
+                                <div class="compact-bar-fill" style="height: ${height}%; background: ${color}">
+                                    <div class="compact-bar-value" style="color: ${color}">${buffData.display}</div>
+                                </div>
+                            </div>
+                            <div class="compact-bar-label">${itemName}</div>
+                        `;
+
+                        barsContainer.appendChild(barItem);
+                    });
+                });
+
+                chartDiv.appendChild(barsContainer);
+            });
+        }
+
+        // タブ切り替え
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabName).classList.add('active');
+
+                // 編成タブに切り替えたら利用可能なキャラクターを表示
+                if (tabName === 'formation') {
+                    renderAvailableCharacters();
+                    renderFormation();
+                }
+
+                // 比較タブに切り替えたら編成セレクターを表示
+                if (tabName === 'comparison') {
+                    renderFormationSelector();
+                    renderComparisonChart();
+                }
+            });
+        });
+
+        // 初期化
+        loadData();
+    </script>
+</body>
+</html>

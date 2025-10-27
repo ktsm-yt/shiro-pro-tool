@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# エディタ
+.vscode/
+.idea/
+
+# ユーザーデータ（個人用）
+data/characters.json
+data/formations.json
+
+# ログ
+*.log
