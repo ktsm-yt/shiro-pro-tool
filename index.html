@@ -274,6 +274,111 @@
             border-color: #9c27b0;
         }
 
+        /* バフ種の色分け（グラフの色と統一） */
+        /* 攻撃系 (#fd79a8 ピンク) */
+        .select-button[data-value="攻撃固定"]:not(.active),
+        .select-button[data-value="攻撃割合"]:not(.active),
+        .select-button[data-value="与ダメ"]:not(.active),
+        .select-button[data-value="与えるダメージ"]:not(.active),
+        .select-button[data-value="被ダメ"]:not(.active),
+        .select-button[data-value="防御デバフ固定"]:not(.active),
+        .select-button[data-value="防御デバフ割合"]:not(.active) {
+            background: #ffe0ee;
+            border-color: #fd79a8;
+            color: #c2185b;
+        }
+        .select-button[data-value="攻撃固定"].active,
+        .select-button[data-value="攻撃割合"].active,
+        .select-button[data-value="与ダメ"].active,
+        .select-button[data-value="与えるダメージ"].active,
+        .select-button[data-value="被ダメ"].active,
+        .select-button[data-value="防御デバフ固定"].active,
+        .select-button[data-value="防御デバフ割合"].active {
+            background: #fd79a8;
+            border-color: #fd79a8;
+        }
+
+        /* 防御系 (#95a5a6 グレー) */
+        .select-button[data-value="防御"]:not(.active),
+        .select-button[data-value="攻撃デバフ固定"]:not(.active),
+        .select-button[data-value="攻撃デバフ割合"]:not(.active) {
+            background: #eceff1;
+            border-color: #95a5a6;
+            color: #455a64;
+        }
+        .select-button[data-value="防御"].active,
+        .select-button[data-value="攻撃デバフ固定"].active,
+        .select-button[data-value="攻撃デバフ割合"].active {
+            background: #95a5a6;
+            border-color: #95a5a6;
+        }
+
+        /* 速度 (#43e97b 緑) */
+        .select-button[data-value="速度"]:not(.active),
+        .select-button[data-value="隙"]:not(.active) {
+            background: #e0f7ed;
+            border-color: #43e97b;
+            color: #1b5e20;
+        }
+        .select-button[data-value="速度"].active,
+        .select-button[data-value="隙"].active {
+            background: #43e97b;
+            border-color: #43e97b;
+        }
+
+        /* 射程 (#e74c3c 赤) */
+        .select-button[data-value="射程固定"]:not(.active),
+        .select-button[data-value="射程割合"]:not(.active) {
+            background: #ffebee;
+            border-color: #e74c3c;
+            color: #b71c1c;
+        }
+        .select-button[data-value="射程固定"].active,
+        .select-button[data-value="射程割合"].active {
+            background: #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        /* 移動速度 (#f39c12 オレンジ) */
+        .select-button[data-value="移動変更"]:not(.active),
+        .select-button[data-value="移動低下"]:not(.active),
+        .select-button[data-value="移動停止"]:not(.active),
+        .select-button[data-value="移動後退"]:not(.active) {
+            background: #fff3e0;
+            border-color: #f39c12;
+            color: #e65100;
+        }
+        .select-button[data-value="移動変更"].active,
+        .select-button[data-value="移動低下"].active,
+        .select-button[data-value="移動停止"].active,
+        .select-button[data-value="移動後退"].active {
+            background: #f39c12;
+            border-color: #f39c12;
+        }
+
+        /* 気管理 (#4facfe 青) */
+        .select-button[data-value="自然気"]:not(.active),
+        .select-button[data-value="気(牛)"]:not(.active),
+        .select-button[data-value="気(ノビ)"]:not(.active),
+        .select-button[data-value="徐々気"]:not(.active),
+        .select-button[data-value="気軽減"]:not(.active),
+        .select-button[data-value="気"]:not(.active),
+        .select-button[data-value="耐久"]:not(.active) {
+            background: #e1f5fe;
+            border-color: #4facfe;
+            color: #01579b;
+        }
+        .select-button[data-value="自然気"].active,
+        .select-button[data-value="気(牛)"].active,
+        .select-button[data-value="気(ノビ)"].active,
+        .select-button[data-value="徐々気"].active,
+        .select-button[data-value="気軽減"].active,
+        .select-button[data-value="気"].active,
+        .select-button[data-value="耐久"].active {
+            background: #4facfe;
+            border-color: #4facfe;
+        }
+
         .btn {
             padding: 12px 30px;
             background: #667eea;
