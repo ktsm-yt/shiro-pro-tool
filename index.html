@@ -184,6 +184,96 @@
             min-width: 40px;
         }
 
+        /* ボタンの種別ごとの色分け */
+        /* 遠近 */
+        .select-button[data-value="遠"]:not(.active) {
+            background: #e3f2fd;
+            border-color: #64b5f6;
+            color: #1976d2;
+        }
+        .select-button[data-value="遠"].active {
+            background: #2196f3;
+            border-color: #2196f3;
+        }
+        .select-button[data-value="近"]:not(.active) {
+            background: #ffebee;
+            border-color: #e57373;
+            color: #c62828;
+        }
+        .select-button[data-value="近"].active {
+            background: #f44336;
+            border-color: #f44336;
+        }
+
+        /* 物術 */
+        .select-button[data-value="物"]:not(.active) {
+            background: #fff3e0;
+            border-color: #ffb74d;
+            color: #e65100;
+        }
+        .select-button[data-value="物"].active {
+            background: #ff9800;
+            border-color: #ff9800;
+        }
+        .select-button[data-value="術"]:not(.active) {
+            background: #f3e5f5;
+            border-color: #ba68c8;
+            color: #6a1b9a;
+        }
+        .select-button[data-value="術"].active {
+            background: #9c27b0;
+            border-color: #9c27b0;
+        }
+
+        /* 属性 */
+        .select-button[data-value="水"]:not(.active) {
+            background: #e1f5fe;
+            border-color: #4fc3f7;
+            color: #0277bd;
+        }
+        .select-button[data-value="水"].active {
+            background: #03a9f4;
+            border-color: #03a9f4;
+        }
+        .select-button[data-value="平"]:not(.active) {
+            background: #e8f5e9;
+            border-color: #81c784;
+            color: #2e7d32;
+        }
+        .select-button[data-value="平"].active {
+            background: #4caf50;
+            border-color: #4caf50;
+        }
+        .select-button[data-value="山"]:not(.active) {
+            background: #efebe9;
+            border-color: #a1887f;
+            color: #4e342e;
+        }
+        .select-button[data-value="山"].active {
+            background: #795548;
+            border-color: #795548;
+        }
+        .select-button[data-value="平山"]:not(.active) {
+            background: #f9fbe7;
+            border-color: #aed581;
+            color: #558b2f;
+        }
+        .select-button[data-value="平山"].active {
+            background: #8bc34a;
+            border-color: #8bc34a;
+        }
+
+        /* 配置（遠近） */
+        .select-button[data-group="placement"][data-value="遠近"]:not(.active) {
+            background: #f3e5f5;
+            border-color: #ba68c8;
+            color: #6a1b9a;
+        }
+        .select-button[data-group="placement"][data-value="遠近"].active {
+            background: #9c27b0;
+            border-color: #9c27b0;
+        }
+
         .btn {
             padding: 12px 30px;
             background: #667eea;
