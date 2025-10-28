@@ -1496,6 +1496,38 @@
             return null;
         }
 
+        // 隙の数値を抽出する関数（符号を反転してバフ/デバフとして扱う）
+        function extractGapValue(effect) {
+            // %形式
+            if (effect.includes('%')) {
+                const match = effect.match(/([+-]?\d+)%/);
+                if (match) {
+                    const originalValue = parseInt(match[1]);
+                    // 符号を反転：隙-40% → +40%（バフ）、隙+40% → -40%（デバフ）
+                    const value = -originalValue;
+                    return {
+                        value: value,
+                        display: `${value > 0 ? '+' : ''}${value}%`,
+                        numeric: Math.abs(value),
+                        isBuff: value > 0  // 正の値ならバフ、負の値ならデバフ
+                    };
+                }
+            }
+            // 固定値形式
+            const match = effect.match(/([+-]?\d+)/);
+            if (match) {
+                const originalValue = parseInt(match[1]);
+                const value = -originalValue;
+                return {
+                    value: value,
+                    display: `${value > 0 ? '+' : ''}${value}`,
+                    numeric: Math.abs(value),
+                    isBuff: value > 0
+                };
+            }
+            return null;
+        }
+
         // バフ/デバフを詳細に集計（実際の数値）
         function calculateDetailedBuffScores() {
             const formationChars = currentFormation.map(id => characters.find(c => c.id === id)).filter(c => c);
@@ -1588,11 +1620,21 @@
                     if (effect.includes('攻撃速度+') || (effect.includes('速度+') && !effect.includes('移動'))) {
                         updateMax('速度', '速度バフ', extractBuffValue(effect));
                     }
-                    if (effect.includes('隙-')) {
-                        updateMax('速度', '隙短縮', extractBuffValue(effect));
+                    // 隙の処理（符号を反転して扱う）
+                    if (effect.includes('隙-') || effect.includes('隙+')) {
+                        const gapValue = extractGapValue(effect);
+                        if (gapValue) {
+                            if (gapValue.isBuff) {
+                                // 隙-XX% → 隙短縮+XX%（バフ）
+                                updateMax('速度', '隙短縮', gapValue);
+                            } else {
+                                // 隙+XX% → 隙増加-XX%（デバフ）
+                                updateMax('速度', '隙増加', gapValue);
+                            }
+                        }
                     }
                     if (effect.includes('攻撃隙0')) {
-                        updateMax('速度', '隙短縮', { value: 100, display: '隙0', numeric: 100 });
+                        updateMax('速度', '隙短縮', { value: 100, display: '+100%', numeric: 100 });
                     }
 
                     // 射程
@@ -1733,7 +1775,15 @@
 
                     // 統一基準値（100）に対する割合
                     const height = buffData.numeric > 0 ? Math.min((buffData.numeric / maxBaseValue) * 100, 100) : 0;
-                    const color = categoryColors[category];
+
+                    // デバフ項目（名前に「デバフ」「増加」「低下」などを含む）は暗い色で表示
+                    let color = categoryColors[category];
+                    const isDebuff = itemName.includes('デバフ') || itemName.includes('増加') ||
+                                    itemName.includes('低下') || itemName.includes('後退') || itemName.includes('停止');
+                    if (isDebuff) {
+                        // デバフは少し暗めの色に変更（不透明度を下げる）
+                        color = categoryColors[category] + '80'; // 50%の不透明度
+                    }
 
                     barItem.innerHTML = `
                         <div class="compact-bar-container">
@@ -2046,7 +2096,14 @@
                         const buffData = formation.scores[category][itemName];
                         // 統一基準値（100）に対する割合
                         const height = buffData.numeric > 0 ? Math.min((buffData.numeric / maxBaseValue) * 100, 100) : 0;
-                        const color = formationColors[formIndex];
+
+                        // デバフ項目は不透明度を下げる
+                        let color = formationColors[formIndex];
+                        const isDebuff = itemName.includes('デバフ') || itemName.includes('増加') ||
+                                        itemName.includes('低下') || itemName.includes('後退') || itemName.includes('停止');
+                        if (isDebuff) {
+                            color = formationColors[formIndex] + '80'; // 50%の不透明度
+                        }
 
                         const barItem = document.createElement('div');
                         barItem.className = 'compact-bar-item';
