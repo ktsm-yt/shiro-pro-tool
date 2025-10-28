@@ -379,6 +379,17 @@
             border-color: #4facfe;
         }
 
+        /* 計略 (#9b59b6 紫) */
+        .select-button[data-value="計略短縮"]:not(.active) {
+            background: #f3e5f5;
+            border-color: #9b59b6;
+            color: #6a1b9a;
+        }
+        .select-button[data-value="計略短縮"].active {
+            background: #9b59b6;
+            border-color: #9b59b6;
+        }
+
         .btn {
             padding: 12px 30px;
             background: #667eea;
@@ -863,24 +874,15 @@
                         </div>
                         <div class="button-group">
                             <label>バフ種</label>
-                            <!-- 気管理 -->
+                            <!-- 気 -->
                             <button type="button" class="select-button" data-group="skillType" data-value="自然気">自然気</button>
                             <button type="button" class="select-button" data-group="skillType" data-value="気(牛)">気(牛)</button>
                             <button type="button" class="select-button" data-group="skillType" data-value="気(ノビ)">気(ノビ)</button>
                             <button type="button" class="select-button" data-group="skillType" data-value="徐々気">徐々気</button>
                             <button type="button" class="select-button" data-group="skillType" data-value="気軽減">気軽減</button>
-                            <!-- 速度 -->
-                            <button type="button" class="select-button" data-group="skillType" data-value="速度">速度</button>
-                            <button type="button" class="select-button" data-group="skillType" data-value="隙">隙</button>
-                            <!-- 移動速度 -->
-                            <button type="button" class="select-button" data-group="skillType" data-value="移動変更">移動変更</button>
-                            <button type="button" class="select-button" data-group="skillType" data-value="移動低下">移動低下</button>
-                            <button type="button" class="select-button" data-group="skillType" data-value="移動停止">移動停止</button>
-                            <button type="button" class="select-button" data-group="skillType" data-value="移動後退">移動後退</button>
-                            <!-- 射程 -->
-                            <button type="button" class="select-button" data-group="skillType" data-value="射程固定">射程固定</button>
-                            <button type="button" class="select-button" data-group="skillType" data-value="射程割合">射程割合</button>
-                            <!-- 攻撃系 -->
+                            <!-- 計略 -->
+                            <button type="button" class="select-button" data-group="skillType" data-value="計略短縮">計略短縮</button>
+                            <!-- 攻撃 -->
                             <button type="button" class="select-button" data-group="skillType" data-value="攻撃固定">攻撃固定</button>
                             <button type="button" class="select-button" data-group="skillType" data-value="攻撃割合">攻撃割合</button>
                             <button type="button" class="select-button" data-group="skillType" data-value="与ダメ">与ダメ</button>
@@ -888,10 +890,21 @@
                             <button type="button" class="select-button" data-group="skillType" data-value="被ダメ">被ダメ</button>
                             <button type="button" class="select-button" data-group="skillType" data-value="防御デバフ固定">防御デバフ固定</button>
                             <button type="button" class="select-button" data-group="skillType" data-value="防御デバフ割合">防御デバフ割合</button>
-                            <!-- 防御系 -->
+                            <!-- 防御 -->
                             <button type="button" class="select-button" data-group="skillType" data-value="防御">防御</button>
                             <button type="button" class="select-button" data-group="skillType" data-value="攻撃デバフ固定">攻撃デバフ固定</button>
                             <button type="button" class="select-button" data-group="skillType" data-value="攻撃デバフ割合">攻撃デバフ割合</button>
+                            <!-- 速度 -->
+                            <button type="button" class="select-button" data-group="skillType" data-value="速度">速度</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="隙">隙</button>
+                            <!-- 移動 -->
+                            <button type="button" class="select-button" data-group="skillType" data-value="移動変更">移動変更</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="移動低下">移動低下</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="移動停止">移動停止</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="移動後退">移動後退</button>
+                            <!-- 射程 -->
+                            <button type="button" class="select-button" data-group="skillType" data-value="射程固定">射程固定</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="射程割合">射程割合</button>
                         </div>
                         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                             <input type="number" id="skillValue" placeholder="数値" style="width: 80px;">
@@ -921,20 +934,27 @@
                         </div>
                         <div class="button-group">
                             <label>バフ種</label>
-                            <!-- 気管理 -->
+                            <!-- 気 -->
                             <button type="button" class="select-button" data-group="formationType" data-value="気">気</button>
                             <button type="button" class="select-button" data-group="formationType" data-value="耐久">耐久</button>
+                            <!-- 計略 -->
+                            <button type="button" class="select-button" data-group="formationType" data-value="計略短縮">計略短縮</button>
+                            <!-- 攻撃 -->
+                            <button type="button" class="select-button" data-group="formationType" data-value="攻撃固定">攻撃固定</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="攻撃割合">攻撃割合</button>
+                            <!-- 防御 -->
+                            <button type="button" class="select-button" data-group="formationType" data-value="防御">防御</button>
                             <!-- 速度 -->
                             <button type="button" class="select-button" data-group="formationType" data-value="速度">速度</button>
                             <button type="button" class="select-button" data-group="formationType" data-value="隙">隙</button>
+                            <!-- 移動 -->
+                            <button type="button" class="select-button" data-group="formationType" data-value="移動変更">移動変更</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="移動低下">移動低下</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="移動停止">移動停止</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="移動後退">移動後退</button>
                             <!-- 射程 -->
                             <button type="button" class="select-button" data-group="formationType" data-value="射程固定">射程固定</button>
                             <button type="button" class="select-button" data-group="formationType" data-value="射程割合">射程割合</button>
-                            <!-- 攻撃系 -->
-                            <button type="button" class="select-button" data-group="formationType" data-value="攻撃固定">攻撃固定</button>
-                            <button type="button" class="select-button" data-group="formationType" data-value="攻撃割合">攻撃割合</button>
-                            <!-- 防御系 -->
-                            <button type="button" class="select-button" data-group="formationType" data-value="防御">防御</button>
                         </div>
                         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                             <input type="number" id="formationValue" placeholder="数値" style="width: 80px;">
@@ -962,24 +982,15 @@
                         </div>
                         <div class="button-group">
                             <label>バフ種</label>
-                            <!-- 気管理 -->
+                            <!-- 気 -->
                             <button type="button" class="select-button" data-group="strategyType" data-value="自然気">自然気</button>
                             <button type="button" class="select-button" data-group="strategyType" data-value="気(牛)">気(牛)</button>
                             <button type="button" class="select-button" data-group="strategyType" data-value="気(ノビ)">気(ノビ)</button>
                             <button type="button" class="select-button" data-group="strategyType" data-value="徐々気">徐々気</button>
                             <button type="button" class="select-button" data-group="strategyType" data-value="気軽減">気軽減</button>
-                            <!-- 速度 -->
-                            <button type="button" class="select-button" data-group="strategyType" data-value="速度">速度</button>
-                            <button type="button" class="select-button" data-group="strategyType" data-value="隙">隙</button>
-                            <!-- 移動速度 -->
-                            <button type="button" class="select-button" data-group="strategyType" data-value="移動変更">移動変更</button>
-                            <button type="button" class="select-button" data-group="strategyType" data-value="移動低下">移動低下</button>
-                            <button type="button" class="select-button" data-group="strategyType" data-value="移動停止">移動停止</button>
-                            <button type="button" class="select-button" data-group="strategyType" data-value="移動後退">移動後退</button>
-                            <!-- 射程 -->
-                            <button type="button" class="select-button" data-group="strategyType" data-value="射程固定">射程固定</button>
-                            <button type="button" class="select-button" data-group="strategyType" data-value="射程割合">射程割合</button>
-                            <!-- 攻撃系 -->
+                            <!-- 計略 -->
+                            <button type="button" class="select-button" data-group="strategyType" data-value="計略短縮">計略短縮</button>
+                            <!-- 攻撃 -->
                             <button type="button" class="select-button" data-group="strategyType" data-value="攻撃固定">攻撃固定</button>
                             <button type="button" class="select-button" data-group="strategyType" data-value="攻撃割合">攻撃割合</button>
                             <button type="button" class="select-button" data-group="strategyType" data-value="与ダメ">与ダメ</button>
@@ -987,10 +998,21 @@
                             <button type="button" class="select-button" data-group="strategyType" data-value="被ダメ">被ダメ</button>
                             <button type="button" class="select-button" data-group="strategyType" data-value="防御デバフ固定">防御デバフ固定</button>
                             <button type="button" class="select-button" data-group="strategyType" data-value="防御デバフ割合">防御デバフ割合</button>
-                            <!-- 防御系 -->
+                            <!-- 防御 -->
                             <button type="button" class="select-button" data-group="strategyType" data-value="防御">防御</button>
                             <button type="button" class="select-button" data-group="strategyType" data-value="攻撃デバフ固定">攻撃デバフ固定</button>
                             <button type="button" class="select-button" data-group="strategyType" data-value="攻撃デバフ割合">攻撃デバフ割合</button>
+                            <!-- 速度 -->
+                            <button type="button" class="select-button" data-group="strategyType" data-value="速度">速度</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="隙">隙</button>
+                            <!-- 移動 -->
+                            <button type="button" class="select-button" data-group="strategyType" data-value="移動変更">移動変更</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="移動低下">移動低下</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="移動停止">移動停止</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="移動後退">移動後退</button>
+                            <!-- 射程 -->
+                            <button type="button" class="select-button" data-group="strategyType" data-value="射程固定">射程固定</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="射程割合">射程割合</button>
                         </div>
                         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                             <input type="number" id="strategyValue" placeholder="数値" style="width: 80px;">
