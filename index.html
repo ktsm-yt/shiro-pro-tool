@@ -1735,15 +1735,14 @@
             return null;
         }
 
-        // 隙の数値を抽出する関数（符号を反転してバフ/デバフとして扱う）
+        // 隙の数値を抽出する関数（+%で短縮、-%で増加）
         function extractGapValue(effect) {
             // %形式
             if (effect.includes('%')) {
                 const match = effect.match(/([+-]?\d+)%/);
                 if (match) {
-                    const originalValue = parseInt(match[1]);
-                    // 符号を反転：隙-40% → +40%（バフ）、隙+40% → -40%（デバフ）
-                    const value = -originalValue;
+                    const value = parseInt(match[1]);
+                    // +なら短縮（バフ）、-なら増加（デバフ）
                     return {
                         value: value,
                         display: `${value > 0 ? '+' : ''}${value}%`,
@@ -1755,8 +1754,7 @@
             // 固定値形式
             const match = effect.match(/([+-]?\d+)/);
             if (match) {
-                const originalValue = parseInt(match[1]);
-                const value = -originalValue;
+                const value = parseInt(match[1]);
                 return {
                     value: value,
                     display: `${value > 0 ? '+' : ''}${value}`,
@@ -1859,15 +1857,15 @@
                     if (effect.includes('攻撃速度+') || (effect.includes('速度+') && !effect.includes('移動'))) {
                         updateMax('速度', '速度バフ', extractBuffValue(effect));
                     }
-                    // 隙の処理（符号を反転して扱う）
+                    // 隙の処理（+で短縮、-で増加）
                     if (effect.includes('隙-') || effect.includes('隙+')) {
                         const gapValue = extractGapValue(effect);
                         if (gapValue) {
                             if (gapValue.isBuff) {
-                                // 隙-XX% → 隙短縮+XX%（バフ）
+                                // 隙+XX% → 隙短縮+XX%（バフ）
                                 updateMax('速度', '隙短縮', gapValue);
                             } else {
-                                // 隙+XX% → 隙増加-XX%（デバフ）
+                                // 隙-XX% → 隙増加-XX%（デバフ）
                                 updateMax('速度', '隙増加', gapValue);
                             }
                         }
