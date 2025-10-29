@@ -1,0 +1,1109 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    padding: 30px;
+}
+
+h1 {
+    text-align: center;
+    color: #667eea;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.tab {
+    padding: 15px 30px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+}
+
+.tab:hover {
+    color: #667eea;
+}
+
+.tab.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+    font-weight: bold;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* キャラクター管理 */
+.character-form {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* 折りたたみ可能なラベル */
+.collapsible-label {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-left: 20px;
+}
+
+.collapsible-label::before {
+    content: '▶';
+    position: absolute;
+    left: 0;
+    transition: transform 0.3s;
+}
+
+.collapsible-label.active::before {
+    transform: rotate(90deg);
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.collapsible-content.active {
+    max-height: 2000px;
+    transition: max-height 0.5s ease-in;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.buff-input-area {
+    background: white;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #e0e0e0;
+}
+
+.buffs-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.buff-tag {
+    background: #667eea;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+}
+
+.buff-tag.editing {
+    background: #f39c12;
+    box-shadow: 0 0 0 2px #f39c12, 0 0 0 4px rgba(243, 156, 18, 0.3);
+}
+
+.buff-tag > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.buff-content {
+    cursor: pointer;
+    padding: 2px;
+    margin: -2px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.buff-content:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.buff-main {
+    display: block;
+    font-weight: bold;
+}
+
+.buff-condition {
+    display: block;
+    font-size: 10px;
+    opacity: 0.85;
+    margin-top: 3px;
+    font-style: italic;
+}
+
+.buff-tag button {
+    background: rgba(255,255,255,0.3);
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 0;
+}
+
+.buff-tag button:hover {
+    background: rgba(255,255,255,0.5);
+}
+
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.button-group label {
+    font-size: 12px;
+    font-weight: bold;
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.select-button {
+    padding: 6px 12px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.select-button:hover {
+    border-color: #667eea;
+}
+
+.select-button.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.select-button.compact {
+    padding: 4px 10px;
+    font-size: 12px;
+    min-width: 40px;
+}
+
+/* ボタンの種別ごとの色分け */
+/* 遠近 */
+.select-button[data-value="遠"]:not(.active) {
+    background: #e3f2fd;
+    border-color: #64b5f6;
+    color: #1976d2;
+}
+.select-button[data-value="遠"].active {
+    background: #2196f3;
+    border-color: #2196f3;
+}
+.select-button[data-value="近"]:not(.active) {
+    background: #ffebee;
+    border-color: #e57373;
+    color: #c62828;
+}
+.select-button[data-value="近"].active {
+    background: #f44336;
+    border-color: #f44336;
+}
+
+/* 物術 */
+.select-button[data-value="物"]:not(.active) {
+    background: #fff3e0;
+    border-color: #ffb74d;
+    color: #e65100;
+}
+.select-button[data-value="物"].active {
+    background: #ff9800;
+    border-color: #ff9800;
+}
+.select-button[data-value="術"]:not(.active) {
+    background: #f3e5f5;
+    border-color: #ba68c8;
+    color: #6a1b9a;
+}
+.select-button[data-value="術"].active {
+    background: #9c27b0;
+    border-color: #9c27b0;
+}
+
+/* 属性 */
+.select-button[data-value="水"]:not(.active) {
+    background: #e1f5fe;
+    border-color: #4fc3f7;
+    color: #0277bd;
+}
+.select-button[data-value="水"].active {
+    background: #03a9f4;
+    border-color: #03a9f4;
+}
+.select-button[data-value="平"]:not(.active) {
+    background: #e8f5e9;
+    border-color: #81c784;
+    color: #2e7d32;
+}
+.select-button[data-value="平"].active {
+    background: #4caf50;
+    border-color: #4caf50;
+}
+.select-button[data-value="山"]:not(.active) {
+    background: #efebe9;
+    border-color: #a1887f;
+    color: #4e342e;
+}
+.select-button[data-value="山"].active {
+    background: #795548;
+    border-color: #795548;
+}
+.select-button[data-value="平山"]:not(.active) {
+    background: #f9fbe7;
+    border-color: #aed581;
+    color: #558b2f;
+}
+.select-button[data-value="平山"].active {
+    background: #8bc34a;
+    border-color: #8bc34a;
+}
+.select-button[data-value="地獄"]:not(.active) {
+    background: #f3e5f5;
+    border-color: #ba68c8;
+    color: #6a1b9a;
+}
+.select-button[data-value="地獄"].active {
+    background: #9c27b0;
+    border-color: #9c27b0;
+}
+.select-button[data-value="無属性"]:not(.active) {
+    background: #f5f5f5;
+    border-color: #9e9e9e;
+    color: #424242;
+}
+.select-button[data-value="無属性"].active {
+    background: #757575;
+    border-color: #757575;
+}
+
+/* 配置（遠近） */
+.select-button[data-group="placement"][data-value="遠近"]:not(.active) {
+    background: #f3e5f5;
+    border-color: #ba68c8;
+    color: #6a1b9a;
+}
+.select-button[data-group="placement"][data-value="遠近"].active {
+    background: #9c27b0;
+    border-color: #9c27b0;
+}
+
+/* バフ種の色分け（グラフの色と統一） */
+/* 攻撃系 (#fd79a8 ピンク) */
+.select-button[data-value="攻撃固定"]:not(.active),
+.select-button[data-value="攻撃割合"]:not(.active),
+.select-button[data-value="与ダメ"]:not(.active),
+.select-button[data-value="与えるダメージ"]:not(.active),
+.select-button[data-value="被ダメ"]:not(.active),
+.select-button[data-value="割合重複"]:not(.active),
+.select-button[data-value="防御デバフ固定"]:not(.active),
+.select-button[data-value="防御デバフ割合"]:not(.active),
+.select-button[data-value="防御無視"]:not(.active) {
+    background: #ffe0ee;
+    border-color: #fd79a8;
+    color: #c2185b;
+}
+.select-button[data-value="攻撃固定"].active,
+.select-button[data-value="攻撃割合"].active,
+.select-button[data-value="与ダメ"].active,
+.select-button[data-value="与えるダメージ"].active,
+.select-button[data-value="被ダメ"].active,
+.select-button[data-value="割合重複"].active,
+.select-button[data-value="防御デバフ固定"].active,
+.select-button[data-value="防御デバフ割合"].active,
+.select-button[data-value="防御無視"].active {
+    background: #fd79a8;
+    border-color: #fd79a8;
+}
+
+/* 防御系 (#95a5a6 グレー) */
+.select-button[data-value="防御固定"]:not(.active),
+.select-button[data-value="防御割合"]:not(.active),
+.select-button[data-value="攻撃デバフ固定"]:not(.active),
+.select-button[data-value="攻撃デバフ割合"]:not(.active) {
+    background: #eceff1;
+    border-color: #95a5a6;
+    color: #455a64;
+}
+.select-button[data-value="防御固定"].active,
+.select-button[data-value="防御割合"].active,
+.select-button[data-value="攻撃デバフ固定"].active,
+.select-button[data-value="攻撃デバフ割合"].active {
+    background: #95a5a6;
+    border-color: #95a5a6;
+}
+
+/* 速度 (#43e97b 緑) */
+.select-button[data-value="速度"]:not(.active),
+.select-button[data-value="隙"]:not(.active) {
+    background: #e0f7ed;
+    border-color: #43e97b;
+    color: #1b5e20;
+}
+.select-button[data-value="速度"].active,
+.select-button[data-value="隙"].active {
+    background: #43e97b;
+    border-color: #43e97b;
+}
+
+/* 射程 (#e74c3c 赤) */
+.select-button[data-value="射程固定"]:not(.active),
+.select-button[data-value="射程割合"]:not(.active) {
+    background: #ffebee;
+    border-color: #e74c3c;
+    color: #b71c1c;
+}
+.select-button[data-value="射程固定"].active,
+.select-button[data-value="射程割合"].active {
+    background: #e74c3c;
+    border-color: #e74c3c;
+}
+
+/* 移動速度 (#f39c12 オレンジ) */
+.select-button[data-value="移動変更"]:not(.active),
+.select-button[data-value="移動低下"]:not(.active),
+.select-button[data-value="移動停止"]:not(.active),
+.select-button[data-value="移動後退"]:not(.active) {
+    background: #fff3e0;
+    border-color: #f39c12;
+    color: #e65100;
+}
+.select-button[data-value="移動変更"].active,
+.select-button[data-value="移動低下"].active,
+.select-button[data-value="移動停止"].active,
+.select-button[data-value="移動後退"].active {
+    background: #f39c12;
+    border-color: #f39c12;
+}
+
+/* 気管理 (#4facfe 青) */
+.select-button[data-value="自然気"]:not(.active),
+.select-button[data-value="気(牛)"]:not(.active),
+.select-button[data-value="気(ノビ)"]:not(.active),
+.select-button[data-value="徐々気"]:not(.active),
+.select-button[data-value="気軽減"]:not(.active),
+.select-button[data-value="気"]:not(.active),
+.select-button[data-value="耐久"]:not(.active) {
+    background: #e1f5fe;
+    border-color: #4facfe;
+    color: #01579b;
+}
+.select-button[data-value="自然気"].active,
+.select-button[data-value="気(牛)"].active,
+.select-button[data-value="気(ノビ)"].active,
+.select-button[data-value="徐々気"].active,
+.select-button[data-value="気軽減"].active,
+.select-button[data-value="気"].active,
+.select-button[data-value="耐久"].active {
+    background: #4facfe;
+    border-color: #4facfe;
+}
+
+/* 計略 (#9b59b6 紫) */
+.select-button[data-value="計略短縮"]:not(.active) {
+    background: #f3e5f5;
+    border-color: #9b59b6;
+    color: #6a1b9a;
+}
+.select-button[data-value="計略短縮"].active {
+    background: #9b59b6;
+    border-color: #9b59b6;
+}
+
+/* フィルターボタンの色分け */
+/* 属性フィルター */
+.select-button[data-group="attributeFilter"][data-value="すべて"]:not(.active) {
+    background: white;
+    border-color: #667eea;
+    color: #667eea;
+}
+.select-button[data-group="attributeFilter"][data-value="すべて"].active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+    font-weight: bold;
+}
+
+.select-button[data-group="attributeFilter"][data-value="水"]:not(.active) {
+    background: #e1f5fe;
+    border-color: #03a9f4;
+    color: #0277bd;
+}
+.select-button[data-group="attributeFilter"][data-value="水"].active {
+    background: #03a9f4;
+    border-color: #03a9f4;
+    color: white;
+    font-weight: bold;
+}
+
+.select-button[data-group="attributeFilter"][data-value="平"]:not(.active) {
+    background: #e8f5e9;
+    border-color: #4caf50;
+    color: #2e7d32;
+}
+.select-button[data-group="attributeFilter"][data-value="平"].active {
+    background: #4caf50;
+    border-color: #4caf50;
+    color: white;
+    font-weight: bold;
+}
+
+.select-button[data-group="attributeFilter"][data-value="山"]:not(.active) {
+    background: #efebe9;
+    border-color: #795548;
+    color: #4e342e;
+}
+.select-button[data-group="attributeFilter"][data-value="山"].active {
+    background: #795548;
+    border-color: #795548;
+    color: white;
+    font-weight: bold;
+}
+
+.select-button[data-group="attributeFilter"][data-value="地獄"]:not(.active) {
+    background: #f3e5f5;
+    border-color: #9c27b0;
+    color: #6a1b9a;
+}
+.select-button[data-group="attributeFilter"][data-value="地獄"].active {
+    background: #9c27b0;
+    border-color: #9c27b0;
+    color: white;
+    font-weight: bold;
+}
+
+.select-button[data-group="attributeFilter"][data-value="無属性"]:not(.active) {
+    background: #f5f5f5;
+    border-color: #757575;
+    color: #424242;
+}
+.select-button[data-group="attributeFilter"][data-value="無属性"].active {
+    background: #757575;
+    border-color: #757575;
+    color: white;
+    font-weight: bold;
+}
+
+/* バフ種別フィルター */
+.select-button[data-group="categoryFilter"][data-value="すべて"]:not(.active) {
+    background: white;
+    border-color: #667eea;
+    color: #667eea;
+}
+.select-button[data-group="categoryFilter"][data-value="すべて"].active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+    font-weight: bold;
+}
+
+.select-button[data-group="categoryFilter"][data-value="気管理"]:not(.active) {
+    background: #e1f5fe;
+    border-color: #4facfe;
+    color: #01579b;
+}
+.select-button[data-group="categoryFilter"][data-value="気管理"].active {
+    background: #4facfe;
+    border-color: #4facfe;
+    color: white;
+    font-weight: bold;
+}
+
+.select-button[data-group="categoryFilter"][data-value="計略"]:not(.active) {
+    background: #f3e5f5;
+    border-color: #9b59b6;
+    color: #6a1b9a;
+}
+.select-button[data-group="categoryFilter"][data-value="計略"].active {
+    background: #9b59b6;
+    border-color: #9b59b6;
+    color: white;
+    font-weight: bold;
+}
+
+.select-button[data-group="categoryFilter"][data-value="攻撃系"]:not(.active) {
+    background: #ffe0ee;
+    border-color: #fd79a8;
+    color: #c2185b;
+}
+.select-button[data-group="categoryFilter"][data-value="攻撃系"].active {
+    background: #fd79a8;
+    border-color: #fd79a8;
+    color: white;
+    font-weight: bold;
+}
+
+.select-button[data-group="categoryFilter"][data-value="防御系"]:not(.active) {
+    background: #eceff1;
+    border-color: #95a5a6;
+    color: #455a64;
+}
+.select-button[data-group="categoryFilter"][data-value="防御系"].active {
+    background: #95a5a6;
+    border-color: #95a5a6;
+    color: white;
+    font-weight: bold;
+}
+
+.select-button[data-group="categoryFilter"][data-value="速度"]:not(.active) {
+    background: #e0f7ed;
+    border-color: #43e97b;
+    color: #1b5e20;
+}
+.select-button[data-group="categoryFilter"][data-value="速度"].active {
+    background: #43e97b;
+    border-color: #43e97b;
+    color: white;
+    font-weight: bold;
+}
+
+.select-button[data-group="categoryFilter"][data-value="移動速度"]:not(.active) {
+    background: #fff3e0;
+    border-color: #f39c12;
+    color: #e65100;
+}
+.select-button[data-group="categoryFilter"][data-value="移動速度"].active {
+    background: #f39c12;
+    border-color: #f39c12;
+    color: white;
+    font-weight: bold;
+}
+
+.select-button[data-group="categoryFilter"][data-value="射程"]:not(.active) {
+    background: #ffebee;
+    border-color: #e74c3c;
+    color: #b71c1c;
+}
+.select-button[data-group="categoryFilter"][data-value="射程"].active {
+    background: #e74c3c;
+    border-color: #e74c3c;
+    color: white;
+    font-weight: bold;
+}
+
+.btn {
+    padding: 12px 30px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+}
+
+.character-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.character-grid.compact-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.character-card {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.compact-grid .character-card {
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.character-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    transform: translateY(-3px);
+}
+
+.character-card h3 {
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+.compact-grid .character-card h3 {
+    font-size: 14px;
+    margin-bottom: 0;
+    text-align: center;
+}
+
+.character-card .meta {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.character-card .buffs {
+    font-size: 13px;
+    color: #333;
+    margin-top: 10px;
+}
+
+.delete-btn {
+    background: #ff4757;
+    padding: 5px 15px;
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+.delete-btn:hover {
+    background: #ee5a6f;
+}
+
+/* 編成作成 */
+.formation-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.formation-stats {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.stat-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    border: 1px solid;
+}
+
+.stat-badge.placement {
+    background: #e3f2fd;
+    border-color: #64b5f6;
+    color: #1976d2;
+}
+
+.stat-badge.attr-水 {
+    background: #e1f5fe;
+    border-color: #4fc3f7;
+    color: #0277bd;
+}
+
+.stat-badge.attr-平 {
+    background: #e8f5e9;
+    border-color: #81c784;
+    color: #2e7d32;
+}
+
+.stat-badge.attr-山 {
+    background: #efebe9;
+    border-color: #a1887f;
+    color: #4e342e;
+}
+
+.stat-badge.attr-平山 {
+    background: #f9fbe7;
+    border-color: #aed581;
+    color: #558b2f;
+}
+
+.stat-badge.attr-地獄 {
+    background: #f3e5f5;
+    border-color: #ba68c8;
+    color: #6a1b9a;
+}
+
+.stat-badge.attr-無属性 {
+    background: #f5f5f5;
+    border-color: #9e9e9e;
+    color: #424242;
+}
+
+.formation-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.formation-slot {
+    background: white;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.formation-slot.empty {
+    color: #999;
+    font-size: 12px;
+}
+
+.formation-slot.filled {
+    border: 2px solid #667eea;
+    background: #f0f3ff;
+    cursor: pointer;
+}
+
+.formation-slot.filled:hover {
+    background: #e5e9ff;
+    transform: scale(1.05);
+}
+
+.formation-slot h4 {
+    color: #667eea;
+    margin-bottom: 3px;
+    font-size: 13px;
+}
+
+.formation-slot .meta {
+    font-size: 10px;
+    color: #666;
+    text-align: center;
+    line-height: 1.3;
+}
+
+.character-selection {
+    margin-bottom: 30px;
+}
+
+.character-selection h3 {
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+
+.character-card.in-formation {
+    opacity: 0.6;
+    border-color: #667eea;
+    background: #e8ecff;
+}
+
+.character-card.in-formation:hover {
+    border-color: #ff4757;
+    opacity: 0.8;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);
+}
+
+.formation-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.formation-actions input {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.saved-formations {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.saved-formation-card {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+    transition: all 0.3s;
+}
+
+.saved-formation-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+}
+
+.saved-formation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.saved-formation-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.saved-formation-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.saved-formation-members {
+    font-size: 14px;
+    color: #666;
+}
+
+/* 棒グラフ */
+.chart-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.bar-chart {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 15px;
+}
+
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 10px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+}
+
+.compact-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 180px;
+    padding: 10px;
+    background: white;
+    border-radius: 10px;
+    overflow-x: auto;
+}
+
+.compact-bar-item {
+    min-width: 35px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+}
+
+.compact-bar-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.compact-bar-fill {
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    transition: height 0.5s ease;
+    position: relative;
+    min-height: 3px;
+}
+
+.compact-bar-value {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.compact-bar-label {
+    margin-top: 5px;
+    font-size: 9px;
+    color: #333;
+    text-align: center;
+    writing-mode: vertical-rl;
+    height: 80px;
+    overflow: hidden;
+}
+
+.category-divider {
+    width: 2px;
+    height: 100%;
+    background: #e0e0e0;
+    margin: 0 5px;
+}
+
+/* 編成比較 */
+.comparison-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.comparison-chart-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.formation-checkbox {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.formation-checkbox:hover {
+    border-color: #667eea;
+}
+
+.formation-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 15px;
+    cursor: pointer;
+}
+
+.formation-checkbox-label {
+    flex: 1;
+}
+
+.formation-checkbox-name {
+    font-size: 16px;
+    font-weight: bold;
+    color: #667eea;
+    margin-bottom: 5px;
+}
+
+.formation-checkbox-members {
+    font-size: 12px;
+    color: #666;
+}
+
+.comparison-bar-group {
+    margin-bottom: 30px;
+}
+
+.comparison-bar-label {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.comparison-bar {
+    margin-bottom: 10px;
+}
+
+.comparison-bar-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+.comparison-bar-formation-name {
+    font-weight: bold;
+}
+
+.comparison-bar-score {
+    color: #667eea;
+}
