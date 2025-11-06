@@ -25,11 +25,15 @@ const weaponMapping = {
 
 // バフパターンマッチング定義
 const buffPatterns = [
-    // 攻撃バフ
+    // 攻撃バフ（巨大化対応：×5倍して登録）
+    { pattern: /巨大化する度に.*?攻撃(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "攻撃割合", unit: "+%", getValue: (m) => parseFloat(m[1]) * 5 },
+    { pattern: /巨大化する度に.*?攻撃(?:力)?[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "攻撃固定", unit: "+", getValue: (m) => parseInt(m[1]) * 5 },
     { pattern: /攻撃(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "攻撃割合", unit: "+%", getValue: (m) => parseFloat(m[1]) },
     { pattern: /攻撃(?:力)?[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "攻撃固定", unit: "+", getValue: (m) => parseInt(m[1]) },
 
-    // 防御バフ
+    // 防御バフ（巨大化対応：×5倍して登録）
+    { pattern: /巨大化する度に.*?防御(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "防御割合", unit: "+%", getValue: (m) => parseFloat(m[1]) * 5 },
+    { pattern: /巨大化する度に.*?防御(?:力)?[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "防御固定", unit: "+", getValue: (m) => parseInt(m[1]) * 5 },
     { pattern: /防御(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "防御割合", unit: "+%", getValue: (m) => parseFloat(m[1]) },
     { pattern: /防御(?:力)?[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "防御固定", unit: "+", getValue: (m) => parseInt(m[1]) },
     { pattern: /防御[をが]?無視/i, type: "防御無視", unit: "", getValue: () => null },
@@ -47,29 +51,34 @@ const buffPatterns = [
     { pattern: /(?:受ける)?ダメージ[がを]?(\d+(?:\.\d+)?)倍/i, type: "被ダメ", unit: "×", getValue: (m) => parseFloat(m[1]) },
     { pattern: /(?:与える)?ダメージ[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "与えるダメージ", unit: "+%", getValue: (m) => parseFloat(m[1]) },
 
-    // 射程
+    // 射程（巨大化対応：×5倍して登録）
+    { pattern: /巨大化する度に.*?射程[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "射程割合", unit: "+%", getValue: (m) => parseFloat(m[1]) * 5 },
+    { pattern: /巨大化する度に.*?射程[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "射程固定", unit: "+", getValue: (m) => parseInt(m[1]) * 5 },
     { pattern: /射程[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "射程割合", unit: "+%", getValue: (m) => parseFloat(m[1]) },
     { pattern: /射程[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "射程固定", unit: "+", getValue: (m) => parseInt(m[1]) },
 
     // 速度・隙
     { pattern: /(?:攻撃)?速度[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "速度", unit: "+%", getValue: (m) => parseFloat(m[1]) },
-    { pattern: /隙[がを]?(\d+(?:\.\d+)?)%(?:低下|減少|短縮)/i, type: "隙", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /(?:攻撃後の)?隙[がを]?(\d+(?:\.\d+)?)%(?:低下|減少|短縮)/i, type: "隙", unit: "+%", getValue: (m) => parseFloat(m[1]) },
     { pattern: /隙[がを]?(\d+(?:\.\d+)?)%(?:増加|上昇)/i, type: "隙", unit: "-%", getValue: (m) => parseFloat(m[1]) },
 
     // 対象数
     { pattern: /(?:攻撃)?対象[がを]?(\d+)(?:体)?(?:増加|上昇|アップ|UP)/i, type: "対象数", unit: "+", getValue: (m) => parseInt(m[1]) },
 
     // 気トークン
-    { pattern: /(?:毎秒)?(?:気トークン|気)[がを]?(\d+(?:\.\d+)?)(?:増加|上昇|取得)/i, type: "自然気", unit: "+", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /撃破(?:獲得|時)?気[がを]?(\d+)(?:増加|上昇)/i, type: "気(牛)", unit: "+", getValue: (m) => parseInt(m[1]) },
     { pattern: /計略使用時[^。]*?気トークン[がを]?(\d+)(?:増加|上昇)/i, type: "気(牛)", unit: "+", getValue: (m) => parseInt(m[1]) },
     { pattern: /行動開始時[^。]*?気トークン[がを]?(\d+)(?:増加|上昇)/i, type: "気(ノビ)", unit: "+", getValue: (m) => parseInt(m[1]) },
     { pattern: /徐々に[^。]*?気トークン[がを]?(\d+)(?:増加|上昇)/i, type: "徐々気", unit: "+", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /(?:毎秒)?(?:気トークン|気)[がを]?(\d+(?:\.\d+)?)(?:増加|上昇|取得)/i, type: "自然気", unit: "+", getValue: (m) => parseFloat(m[1]) },
     { pattern: /消費(?:気トークン|気)[がを]?(\d+(?:\.\d+)?)%(?:減少|軽減)/i, type: "気軽減", unit: "+%", getValue: (m) => parseFloat(m[1]) },
 
     // 計略再使用
     { pattern: /計略(?:の)?再使用[^。]*?(\d+(?:\.\d+)?)%(?:短縮|減少)/i, type: "計略短縮", unit: "+%", getValue: (m) => parseFloat(m[1]) },
 
-    // 移動速度
+    // 移動速度（巨大化対応：×5倍して登録）
+    { pattern: /巨大化する度に.*?移動速度[がを]?(\d+(?:\.\d+)?)%(?:低下|減少|ダウン|DOWN)/i, type: "移動低下", unit: "+%", getValue: (m) => parseFloat(m[1]) * 5 },
+    { pattern: /巨大化する度に.*?移動速度[がを]?(\d+(?:\.\d+)?)%(?:上昇|増加|アップ|UP)/i, type: "移動上昇", unit: "+%", getValue: (m) => parseFloat(m[1]) * 5 },
     { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)%(?:低下|減少|ダウン|DOWN)/i, type: "移動低下", unit: "+%", getValue: (m) => parseFloat(m[1]) },
     { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)%(?:上昇|増加|アップ|UP)/i, type: "移動上昇", unit: "+%", getValue: (m) => parseFloat(m[1]) },
     { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)(?:に変更|へ変更)/i, type: "移動変更", unit: "+", getValue: (m) => parseFloat(m[1]) },
