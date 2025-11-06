@@ -1,3 +1,549 @@
+// 武器種マッピングテーブル（武器種 → 遠近・物術・配置）
+const weaponMapping = {
+    "弓": { range: "遠", type: "物", placement: "遠" },
+    "鉄砲": { range: "遠", type: "物", placement: "遠" },
+    "石弓": { range: "遠", type: "物", placement: "遠" },
+    "投剣": { range: "遠", type: "物", placement: "遠近" },
+    "軍船": { range: "遠", type: "物", placement: "遠近" },
+    "槍": { range: "近", type: "物", placement: "近" },
+    "刀": { range: "近", type: "物", placement: "近" },
+    "盾": { range: "近", type: "物", placement: "近" },
+    "ランス": { range: "近", type: "物", placement: "近" },
+    "双剣": { range: "近", type: "物", placement: "近" },
+    "拳": { range: "近", type: "物", placement: "近" },
+    "鞭": { range: "近", type: "物", placement: "遠近" },
+    "茶器": { range: "近", type: "物", placement: "遠近" },
+    "歌舞": { range: "遠", type: "術", placement: "遠" },
+    "本": { range: "遠", type: "術", placement: "遠" },
+    "砲術": { range: "遠", type: "術", placement: "遠" },
+    "鈴": { range: "遠", type: "術", placement: "遠" },
+    "杖": { range: "遠", type: "術", placement: "遠" },
+    "札": { range: "遠", type: "術", placement: "遠" },
+    "大砲": { range: "遠", type: "物", placement: "遠近" },
+    "陣貝": { range: "遠", type: "術", placement: "遠近" }
+};
+
+// バフパターンマッチング定義
+const buffPatterns = [
+    // 攻撃バフ
+    { pattern: /攻撃(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "攻撃割合", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /攻撃(?:力)?[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "攻撃固定", unit: "+", getValue: (m) => parseInt(m[1]) },
+
+    // 防御バフ
+    { pattern: /防御(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "防御割合", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /防御(?:力)?[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "防御固定", unit: "+", getValue: (m) => parseInt(m[1]) },
+    { pattern: /防御[をが]?無視/i, type: "防御無視", unit: "", getValue: () => null },
+
+    // 防御デバフ
+    { pattern: /(?:敵の)?防御(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:低下|減少|ダウン|DOWN)/i, type: "防御デバフ割合", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /(?:敵の)?防御(?:力)?[がを]?(\d+)(?:低下|減少|ダウン|DOWN)/i, type: "防御デバフ固定", unit: "+", getValue: (m) => parseInt(m[1]) },
+
+    // 攻撃デバフ
+    { pattern: /(?:敵の)?攻撃(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:低下|減少|ダウン|DOWN)/i, type: "攻撃デバフ割合", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /(?:敵の)?攻撃(?:力)?[がを]?(\d+)(?:低下|減少|ダウン|DOWN)/i, type: "攻撃デバフ固定", unit: "+", getValue: (m) => parseInt(m[1]) },
+
+    // ダメージ
+    { pattern: /(?:与える)?ダメージ[がを]?(\d+(?:\.\d+)?)倍/i, type: "与ダメ", unit: "×", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /(?:受ける)?ダメージ[がを]?(\d+(?:\.\d+)?)倍/i, type: "被ダメ", unit: "×", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /(?:与える)?ダメージ[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "与えるダメージ", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+
+    // 射程
+    { pattern: /射程[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "射程割合", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /射程[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "射程固定", unit: "+", getValue: (m) => parseInt(m[1]) },
+
+    // 速度・隙
+    { pattern: /(?:攻撃)?速度[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "速度", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /隙[がを]?(\d+(?:\.\d+)?)%(?:低下|減少|短縮)/i, type: "隙", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /隙[がを]?(\d+(?:\.\d+)?)%(?:増加|上昇)/i, type: "隙", unit: "-%", getValue: (m) => parseFloat(m[1]) },
+
+    // 対象数
+    { pattern: /(?:攻撃)?対象[がを]?(\d+)(?:体)?(?:増加|上昇|アップ|UP)/i, type: "対象数", unit: "+", getValue: (m) => parseInt(m[1]) },
+
+    // 気トークン
+    { pattern: /(?:毎秒)?(?:気トークン|気)[がを]?(\d+(?:\.\d+)?)(?:増加|上昇|取得)/i, type: "自然気", unit: "+", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /計略使用時[^。]*?気トークン[がを]?(\d+)(?:増加|上昇)/i, type: "気(牛)", unit: "+", getValue: (m) => parseInt(m[1]) },
+    { pattern: /行動開始時[^。]*?気トークン[がを]?(\d+)(?:増加|上昇)/i, type: "気(ノビ)", unit: "+", getValue: (m) => parseInt(m[1]) },
+    { pattern: /徐々に[^。]*?気トークン[がを]?(\d+)(?:増加|上昇)/i, type: "徐々気", unit: "+", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /消費(?:気トークン|気)[がを]?(\d+(?:\.\d+)?)%(?:減少|軽減)/i, type: "気軽減", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+
+    // 計略再使用
+    { pattern: /計略(?:の)?再使用[^。]*?(\d+(?:\.\d+)?)%(?:短縮|減少)/i, type: "計略短縮", unit: "+%", getValue: (m) => parseFloat(m[1]) }
+];
+
+// 対象キーワードマッピング
+const targetKeywords = [
+    { pattern: /自身/i, target: "自身" },
+    { pattern: /味方(?:の)?(?:全(?:員|体)|全て)/i, target: "味方全員" },
+    { pattern: /味方(?:の)?射程(?:内|範囲)/i, target: "味方射程内" },
+    { pattern: /伏兵(?:の)?射程(?:内|範囲)/i, target: "伏兵射程内" },
+    { pattern: /味方(?:の)?(?:歌舞|本|札|杖|鈴|砲術)(?:ユニット)?/i, target: "味方射程内" },
+    { pattern: /範囲内(?:の)?(?:味方|全(?:員|体))/i, target: "味方射程内" }
+];
+
+// Wiki URLからキャラクター情報を取得
+async function fetchFromWikiURL() {
+    const urlInput = document.getElementById('wikiURL');
+    const statusDiv = document.getElementById('wikiImportStatus');
+    const url = urlInput.value.trim();
+
+    if (!url) {
+        statusDiv.innerHTML = '<span style="color: #e74c3c;">❌ URLを入力してください</span>';
+        return;
+    }
+
+    if (!url.includes('scre.swiki.jp')) {
+        statusDiv.innerHTML = '<span style="color: #e74c3c;">❌ 城プロWikiのURLを入力してください</span>';
+        return;
+    }
+
+    statusDiv.innerHTML = '<span style="color: #3498db;">⏳ データ取得中...</span>';
+
+    try {
+        // CORSプロキシを使用してWikiページを取得
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyUrl);
+
+        if (!response.ok) {
+            throw new Error('ページの取得に失敗しました');
+        }
+
+        const html = await response.text();
+        const characterData = parseWikiHTML(html);
+
+        if (!characterData) {
+            statusDiv.innerHTML = '<span style="color: #e74c3c;">❌ データの解析に失敗しました</span>';
+            return;
+        }
+
+        // フォームにデータを自動入力
+        fillFormWithData(characterData);
+        statusDiv.innerHTML = '<span style="color: #27ae60;">✅ データを取得しました！フォームを確認して登録してください</span>';
+
+    } catch (error) {
+        console.error('Wiki取得エラー:', error);
+        statusDiv.innerHTML = `<span style="color: #e74c3c;">❌ エラー: ${error.message}</span>`;
+    }
+}
+
+// WikiのHTMLをパースしてキャラクター情報を抽出
+function parseWikiHTML(html) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    try {
+        const data = {
+            name: '',
+            period: '',
+            weapon: '',
+            attributes: [],
+            weaponRange: '',
+            weaponType: '',
+            placement: '',
+            skillsText: [],      // 特技のテキスト
+            strategiesText: []   // 計略のテキスト
+        };
+
+        // ページタイトルから名前を取得
+        const title = doc.querySelector('title')?.textContent || '';
+        const titleMatch = title.match(/^(.+?)\s*-/);
+        if (titleMatch) {
+            let fullName = titleMatch[1].trim();
+
+            // 期間の接頭辞を抽出（［絢爛］、［響乱］など）
+            const periodMatch = fullName.match(/^［(.+?)］(.+)$/);
+            if (periodMatch) {
+                data.period = periodMatch[1];
+                data.name = periodMatch[2].trim();
+            } else {
+                data.name = fullName;
+            }
+        }
+
+        // テーブルから基本情報を取得
+        const tables = doc.querySelectorAll('table');
+
+        for (const table of tables) {
+            const rows = table.querySelectorAll('tr');
+
+            for (const row of rows) {
+                let header = '';
+                let value = '';
+                let valueTd = null;
+
+                // パターン1: th + td 構造
+                const th = row.querySelector('th');
+                const tdWithTh = row.querySelector('td');
+
+                // パターン2: td + td 構造（基本情報テーブル）
+                const allTds = row.querySelectorAll('td');
+
+                if (th && tdWithTh) {
+                    // th + td 構造
+                    header = th.textContent.trim();
+                    value = tdWithTh.textContent.trim();
+                    valueTd = tdWithTh;
+                } else if (allTds.length >= 2) {
+                    // td + td 構造（最初のtdがラベル、2番目が値）
+                    header = allTds[0].textContent.trim();
+                    value = allTds[1].textContent.trim();
+                    valueTd = allTds[1];
+
+                    // textContentが空の場合、innerTextを試す（画像やリンクがある場合）
+                    if (!value && valueTd) {
+                        value = valueTd.innerText?.trim() || '';
+
+                        // それでも空なら、リンクのテキストを探す
+                        if (!value) {
+                            const link = valueTd.querySelector('a');
+                            if (link) {
+                                value = link.textContent.trim();
+                            }
+                        }
+                    }
+                } else {
+                    // どちらでもない行はスキップ
+                    continue;
+                }
+
+                // 武器属性
+                if (header === '武器属性') {
+                    // 括弧とその中身を除去（例：「投剣(四方剣)」→「投剣」）
+                    const cleanWeapon = value.replace(/\(.+?\)/g, '').trim();
+                    data.weapon = cleanWeapon;
+
+                    // 武器種から遠近・物術・配置を判定
+                    if (weaponMapping[cleanWeapon]) {
+                        data.weaponRange = weaponMapping[cleanWeapon].range;
+                        data.weaponType = weaponMapping[cleanWeapon].type;
+                        data.placement = weaponMapping[cleanWeapon].placement;
+                    } else {
+                        console.warn('武器種がマッピングテーブルに存在しません:', cleanWeapon);
+                    }
+                }
+
+                // 城属性
+                if (header === '城属性') {
+                    let attrText = '';
+
+                    // valueが空の場合、td要素から画像のalt属性を取得
+                    if (!value && valueTd) {
+                        const img = valueTd.querySelector('img');
+                        if (img) {
+                            // alt属性から取得（例：「平山.png」）
+                            const altText = img.getAttribute('alt') || img.getAttribute('title') || '';
+                            // .pngを除去（例：「平山.png」→「平山」）
+                            attrText = altText.replace(/\.png$/i, '');
+                        }
+                    } else {
+                        // valueがある場合はテキストから取得
+                        attrText = value.replace(/\s+/g, '').replace(/属性/g, '');
+                    }
+
+                    // 「平山」は特殊な複合属性として扱う
+                    if (attrText === '平山' || attrText.includes('平山')) {
+                        data.attributes.push('平山');
+                    } else {
+                        // 個別の属性をチェック
+                        if (attrText.includes('水')) data.attributes.push('水');
+                        if (attrText.includes('平')) data.attributes.push('平');
+                        if (attrText.includes('山')) data.attributes.push('山');
+                    }
+                    if (attrText.includes('地獄')) data.attributes.push('地獄');
+
+                    // 無属性の場合
+                    if (data.attributes.length === 0 && attrText.includes('無')) {
+                        data.attributes.push('無属性');
+                    }
+                }
+
+                // 特技・計略の検出（headerに [無印] や [改壱] が含まれる場合）
+                if (header.includes('[無印]') || header.includes('[改壱]') || header.includes('[改弐]')) {
+                    // 計略かどうかを判定（気コストや再使用時間が含まれている）
+                    if (header.includes('気:') || header.includes('秒')) {
+                        // 計略
+                        data.strategiesText.push({
+                            name: header,
+                            description: value
+                        });
+                    } else if (header.includes('/')) {
+                        // 特技（特殊能力）
+                        data.skillsText.push({
+                            name: header,
+                            description: value
+                        });
+                    }
+                }
+            }
+        }
+
+        return data;
+
+    } catch (error) {
+        console.error('パースエラー:', error);
+        return null;
+    }
+}
+
+// 取得したデータをフォームに自動入力
+function fillFormWithData(data) {
+    // 名前
+    document.getElementById('charName').value = data.name;
+
+    // 期間
+    document.getElementById('charPeriod').value = data.period;
+
+    // 武器種
+    document.getElementById('charWeapon').value = data.weapon;
+
+    // 遠近ボタン
+    if (data.weaponRange) {
+        document.querySelectorAll('[data-group="weaponRange"]').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.value === data.weaponRange) {
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    // 物術ボタン
+    if (data.weaponType) {
+        document.querySelectorAll('[data-group="weaponType"]').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.value === data.weaponType) {
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    // 配置ボタン
+    if (data.placement) {
+        document.querySelectorAll('[data-group="placement"]').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.value === data.placement) {
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    // 属性ボタン（複数選択）
+    document.querySelectorAll('[data-group="attribute"]').forEach(btn => {
+        btn.classList.remove('active');
+        if (data.attributes.includes(btn.dataset.value)) {
+            btn.classList.add('active');
+        }
+    });
+
+    // 特技・計略の表示（分割版）
+    const skillsDisplay = document.getElementById('wikiSkillsDisplay');
+    const strategiesDisplay = document.getElementById('wikiStrategiesDisplay');
+
+    // [改壱]があるかチェック
+    const hasKaiichi = data.skillsText.some(s => s.name.includes('[改壱]')) ||
+                       data.strategiesText.some(s => s.name.includes('[改壱]'));
+
+    // 特技の表示
+    if (data.skillsText.length > 0) {
+        // 重複を除去
+        const uniqueSkills = [];
+        const seenNames = new Set();
+        for (const skill of data.skillsText) {
+            if (!seenNames.has(skill.name)) {
+                seenNames.add(skill.name);
+                uniqueSkills.push(skill);
+            }
+        }
+
+        let filteredSkills = uniqueSkills;
+        if (hasKaiichi) {
+            filteredSkills = uniqueSkills.filter(s => !s.name.includes('[無印]'));
+        }
+
+        if (filteredSkills.length > 0) {
+            let html = '<div style="background: #fef5e7; padding: 15px; border-radius: 8px; border: 2px solid #e67e22;">';
+            html += '<strong style="color: #e67e22; font-size: 16px;">📖 特技（Wikiより）</strong>';
+            filteredSkills.forEach(skill => {
+                const escapedDescription = skill.description.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                html += `<div style="margin: 10px 0; padding: 10px; background: white; border-left: 3px solid #e67e22; border-radius: 4px;">`;
+                html += `<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 5px;">`;
+                html += `<div style="font-weight: bold; color: #d35400; flex: 1;">${skill.name}</div>`;
+                html += `<button class="btn" onclick="analyzeAndAddSkill('${escapedDescription}')" style="padding: 4px 12px; font-size: 12px; background: #e67e22; margin-left: 10px;">🔍 解析</button>`;
+                html += `</div>`;
+                html += `<div style="color: #555; line-height: 1.5;">${skill.description}</div>`;
+                html += `</div>`;
+            });
+            html += '</div>';
+            skillsDisplay.innerHTML = html;
+            skillsDisplay.style.display = 'block';
+        } else {
+            skillsDisplay.style.display = 'none';
+        }
+    } else {
+        skillsDisplay.style.display = 'none';
+    }
+
+    // 計略の表示
+    if (data.strategiesText.length > 0) {
+        // 重複を除去
+        const uniqueStrategies = [];
+        const seenNames = new Set();
+        for (const strategy of data.strategiesText) {
+            if (!seenNames.has(strategy.name)) {
+                seenNames.add(strategy.name);
+                uniqueStrategies.push(strategy);
+            }
+        }
+
+        let filteredStrategies = uniqueStrategies;
+        if (hasKaiichi) {
+            filteredStrategies = uniqueStrategies.filter(s => !s.name.includes('[無印]'));
+        }
+
+        if (filteredStrategies.length > 0) {
+            let html = '<div style="background: #f4ecf7; padding: 15px; border-radius: 8px; border: 2px solid #8e44ad;">';
+            html += '<strong style="color: #8e44ad; font-size: 16px;">⚔️ 計略（Wikiより）</strong>';
+            filteredStrategies.forEach(strategy => {
+                const escapedDescription = strategy.description.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                html += `<div style="margin: 10px 0; padding: 10px; background: white; border-left: 3px solid #8e44ad; border-radius: 4px;">`;
+                html += `<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 5px;">`;
+                html += `<div style="font-weight: bold; color: #7d3c98; flex: 1;">${strategy.name}</div>`;
+                html += `<button class="btn" onclick="analyzeAndAddStrategy('${escapedDescription}')" style="padding: 4px 12px; font-size: 12px; background: #8e44ad; margin-left: 10px;">🔍 解析</button>`;
+                html += `</div>`;
+                html += `<div style="color: #555; line-height: 1.5;">${strategy.description}</div>`;
+                html += `</div>`;
+            });
+            html += '</div>';
+            strategiesDisplay.innerHTML = html;
+            strategiesDisplay.style.display = 'block';
+        } else {
+            strategiesDisplay.style.display = 'none';
+        }
+    } else {
+        strategiesDisplay.style.display = 'none';
+    }
+}
+
+// バフテキスト解析関数
+function parseBuffText(text) {
+    const results = [];
+
+    // 対象を検出
+    let target = "味方射程内"; // デフォルト
+    for (const keyword of targetKeywords) {
+        if (keyword.pattern.test(text)) {
+            target = keyword.target;
+            break;
+        }
+    }
+
+    // 各バフパターンをマッチング
+    for (const buffPattern of buffPatterns) {
+        const match = text.match(buffPattern.pattern);
+        if (match) {
+            const value = buffPattern.getValue(match);
+
+            // 条件を抽出（簡易版）
+            let condition = "";
+
+            // 「○○の場合」「○○時」などのパターンを検出
+            const conditionPatterns = [
+                /([^。、]+)(?:の場合|時)/,
+                /([^。、]+)に対して/,
+                /([^。、]+)のみ/
+            ];
+
+            for (const condPattern of conditionPatterns) {
+                const condMatch = text.match(condPattern);
+                if (condMatch) {
+                    condition = condMatch[1].trim();
+                    break;
+                }
+            }
+
+            results.push({
+                target: target,
+                type: buffPattern.type,
+                unit: buffPattern.unit,
+                value: value,
+                condition: condition
+            });
+        }
+    }
+
+    return results;
+}
+
+// バフ解析結果を適切なリストに追加
+function addParsedBuffs(buffs, buffType) {
+    // buffType: 'skill' または 'strategy'
+
+    buffs.forEach(buff => {
+        if (buffType === 'skill') {
+            // 特技のバフリストに追加
+            const buffString = buff.value !== null
+                ? `${buff.target}/${buff.type}/${buff.unit}/${buff.value}`
+                : `${buff.target}/${buff.type}`;
+
+            // 条件がある場合は追加
+            const fullBuffString = buff.condition
+                ? `${buffString} (${buff.condition})`
+                : buffString;
+
+            tempSkills.push({
+                buff: fullBuffString,
+                condition: buff.condition,
+                duplicate: false
+            });
+        } else if (buffType === 'strategy') {
+            // 計略のバフリストに追加
+            const buffString = buff.value !== null
+                ? `${buff.target}/${buff.type}/${buff.unit}/${buff.value}`
+                : `${buff.target}/${buff.type}`;
+
+            // 条件がある場合は追加
+            const fullBuffString = buff.condition
+                ? `${buffString} (${buff.condition})`
+                : buffString;
+
+            tempStrategies.push({
+                buff: fullBuffString,
+                condition: buff.condition,
+                duplicate: false
+            });
+        }
+    });
+
+    // リストを更新
+    if (buffType === 'skill') {
+        updateSkillsList();
+    } else if (buffType === 'strategy') {
+        updateStrategiesList();
+    }
+}
+
+// 特技テキストから解析してバフを追加
+function analyzeAndAddSkill(description) {
+    const buffs = parseBuffText(description);
+    if (buffs.length === 0) {
+        alert('バフパターンが検出されませんでした。手動で入力してください。');
+        return;
+    }
+
+    addParsedBuffs(buffs, 'skill');
+    alert(`${buffs.length}個のバフを検出し、特技リストに追加しました。`);
+}
+
+// 計略テキストから解析してバフを追加
+function analyzeAndAddStrategy(description) {
+    const buffs = parseBuffText(description);
+    if (buffs.length === 0) {
+        alert('バフパターンが検出されませんでした。手動で入力してください。');
+        return;
+    }
+
+    addParsedBuffs(buffs, 'strategy');
+    alert(`${buffs.length}個のバフを検出し、計略リストに追加しました。`);
+}
+
 // 折りたたみ機能
 function toggleCollapsible(labelElement) {
     labelElement.classList.toggle('active');
