@@ -114,16 +114,62 @@ async function fetchFromWikiURL() {
 
     statusDiv.innerHTML = '<span style="color: #3498db;">⏳ データ取得中...</span>';
 
-    try {
-        // CORSプロキシを使用してWikiページを取得
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-        const response = await fetch(proxyUrl);
+    // CORSプロキシのリスト（優先順位順）
+    const corsProxies = [
+        `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+    ];
 
-        if (!response.ok) {
-            throw new Error('ページの取得に失敗しました');
+    let html = null;
+    let lastError = null;
+
+    // 各プロキシを順番に試す
+    for (let i = 0; i < corsProxies.length; i++) {
+        try {
+            statusDiv.innerHTML = `<span style="color: #3498db;">⏳ データ取得中... (試行 ${i + 1}/${corsProxies.length})</span>`;
+
+            const response = await fetch(corsProxies[i], {
+                method: 'GET',
+                headers: {
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            html = await response.text();
+
+            // HTMLが正しく取得できたか簡易チェック
+            if (html && html.length > 100 && html.includes('</html>')) {
+                console.log(`成功: プロキシ ${i + 1} を使用`);
+                break;
+            } else {
+                throw new Error('HTMLの取得に失敗');
+            }
+
+        } catch (error) {
+            console.warn(`プロキシ ${i + 1} でエラー:`, error.message);
+            lastError = error;
+
+            // 最後のプロキシでもない場合は次を試す
+            if (i < corsProxies.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 500)); // 500ms待機
+                continue;
+            }
         }
+    }
 
-        const html = await response.text();
+    // 全てのプロキシで失敗した場合
+    if (!html) {
+        console.error('全てのプロキシで失敗:', lastError);
+        statusDiv.innerHTML = '<span style="color: #e74c3c;">❌ データの取得に失敗しました。ブラウザの拡張機能でCORSを無効化するか、ローカルサーバーを使用してください。</span>';
+        return;
+    }
+
+    try {
         const characterData = parseWikiHTML(html);
 
         if (!characterData) {
@@ -136,8 +182,8 @@ async function fetchFromWikiURL() {
         statusDiv.innerHTML = '<span style="color: #27ae60;">✅ データを取得しました！フォームを確認して登録してください</span>';
 
     } catch (error) {
-        console.error('Wiki取得エラー:', error);
-        statusDiv.innerHTML = `<span style="color: #e74c3c;">❌ エラー: ${error.message}</span>`;
+        console.error('解析エラー:', error);
+        statusDiv.innerHTML = `<span style="color: #e74c3c;">❌ データの解析エラー: ${error.message}</span>`;
     }
 }
 
