@@ -549,46 +549,36 @@ function addParsedBuffs(buffs, buffType) {
     // buffType: 'skill' または 'strategy'
 
     buffs.forEach(buff => {
+        // バフ文字列を構築
+        let buffString;
+        if (buff.value !== null) {
+            // 値がある場合: 対象/タイプ/単位/値
+            buffString = `${buff.target}/${buff.type}/${buff.unit}/${buff.value}`;
+        } else if (buff.unit === "") {
+            // 値がなく単位も空の場合（例: 防御無視）: 対象/タイプ
+            buffString = `${buff.target}/${buff.type}`;
+        } else {
+            // 値がないが単位がある場合: 対象/タイプ/単位
+            buffString = `${buff.target}/${buff.type}/${buff.unit}`;
+        }
+
+        // 条件がある場合は括弧で追加
+        const fullBuffString = buff.condition
+            ? `${buffString}（${buff.condition}）`
+            : buffString;
+
         if (buffType === 'skill') {
-            // 特技のバフリストに追加
-            const buffString = buff.value !== null
-                ? `${buff.target}/${buff.type}/${buff.unit}/${buff.value}`
-                : `${buff.target}/${buff.type}`;
-
-            // 条件がある場合は追加
-            const fullBuffString = buff.condition
-                ? `${buffString} (${buff.condition})`
-                : buffString;
-
-            tempSkills.push({
-                buff: fullBuffString,
-                condition: buff.condition,
-                duplicate: false
-            });
+            tempSkills.push(fullBuffString);
         } else if (buffType === 'strategy') {
-            // 計略のバフリストに追加
-            const buffString = buff.value !== null
-                ? `${buff.target}/${buff.type}/${buff.unit}/${buff.value}`
-                : `${buff.target}/${buff.type}`;
-
-            // 条件がある場合は追加
-            const fullBuffString = buff.condition
-                ? `${buffString} (${buff.condition})`
-                : buffString;
-
-            tempStrategies.push({
-                buff: fullBuffString,
-                condition: buff.condition,
-                duplicate: false
-            });
+            tempStrategies.push(fullBuffString);
         }
     });
 
     // リストを更新
     if (buffType === 'skill') {
-        updateSkillsList();
+        renderBuffsList('skillsList', tempSkills, 'skill');
     } else if (buffType === 'strategy') {
-        updateStrategiesList();
+        renderBuffsList('strategiesList', tempStrategies, 'strategy');
     }
 }
 
