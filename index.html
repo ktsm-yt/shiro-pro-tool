@@ -153,11 +153,28 @@
                 <div class="form-group">
                     <label>特技</label>
                     <div class="buff-input-area">
-                        <div class="button-group">
+                        <div class="target-selector">
                             <label>対象</label>
-                            <button type="button" class="select-button" data-group="skillTarget" data-value="自身">自身</button>
-                            <button type="button" class="select-button" data-group="skillTarget" data-value="味方射程内">味方射程内</button>
-                            <button type="button" class="select-button" data-group="skillTarget" data-value="味方全員">味方全員</button>
+                            <div class="button-group target-base-group">
+                                <button type="button" class="select-button" data-group="skillTargetBase" data-value="自身">自身</button>
+                                <button type="button" class="select-button" data-group="skillTargetBase" data-value="射程内">射程内</button>
+                                <button type="button" class="select-button" data-group="skillTargetBase" data-value="全">全</button>
+                            </div>
+                            <div class="button-group target-modifier-group">
+                                <label>追加条件（複数選択可）</label>
+                                <button type="button" class="select-button multi-select" data-group="skillTargetModifier" data-value="味方">味方</button>
+                                <button type="button" class="select-button multi-select" data-group="skillTargetModifier" data-value="伏兵">伏兵</button>
+                                <button type="button" class="select-button multi-select" data-group="skillTargetModifier" data-value="殿">殿</button>
+                                <button type="button" class="select-button multi-select" data-group="skillTargetModifier" data-value="水">水</button>
+                                <button type="button" class="select-button multi-select" data-group="skillTargetModifier" data-value="平">平</button>
+                                <button type="button" class="select-button multi-select" data-group="skillTargetModifier" data-value="山">山</button>
+                                <button type="button" class="select-button multi-select" data-group="skillTargetModifier" data-value="平山">平山</button>
+                                <button type="button" class="select-button multi-select" data-group="skillTargetModifier" data-value="地獄">地獄</button>
+                            </div>
+                            <div class="custom-target-input">
+                                <input type="text" id="skillTargetCustom" placeholder="カスタム条件（例：歌舞のみ、盾のみ）">
+                            </div>
+                            <p class="target-hint">※ 「味方・伏兵・殿・属性」が含まれる対象は編成画面で強調表示されます</p>
                         </div>
                         <div class="button-group">
                             <label>バフ種</label>

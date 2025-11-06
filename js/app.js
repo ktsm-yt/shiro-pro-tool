@@ -26,41 +26,43 @@ const weaponMapping = {
 // バフパターンマッチング定義
 const buffPatterns = [
     // 攻撃バフ（巨大化対応：×5倍して登録）
-    { pattern: /巨大化する度に.*?攻撃(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "攻撃割合", unit: "+%", getValue: (m) => parseFloat(m[1]) * 5 },
-    { pattern: /巨大化する度に.*?攻撃(?:力)?[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "攻撃固定", unit: "+", getValue: (m) => parseInt(m[1]) * 5 },
-    { pattern: /攻撃(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "攻撃割合", unit: "+%", getValue: (m) => parseFloat(m[1]) },
-    { pattern: /攻撃(?:力)?[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "攻撃固定", unit: "+", getValue: (m) => parseInt(m[1]) },
+    { pattern: /巨大化する度に.*?攻撃(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "攻撃割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) * 5 },
+    { pattern: /巨大化する度に.*?攻撃(?:力)?[がを]?([+＋-－]?\d+)(?:上昇|アップ|UP|増加)/i, type: "攻撃固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) * 5 },
+    { pattern: /攻撃(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "攻撃割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
+    { pattern: /攻撃(?:力)?[がを]?([+＋-－]?\d+)(?:上昇|アップ|UP|増加)/i, type: "攻撃固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) },
 
     // 防御バフ（巨大化対応：×5倍して登録）
-    { pattern: /巨大化する度に.*?防御(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "防御割合", unit: "+%", getValue: (m) => parseFloat(m[1]) * 5 },
-    { pattern: /巨大化する度に.*?防御(?:力)?[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "防御固定", unit: "+", getValue: (m) => parseInt(m[1]) * 5 },
-    { pattern: /防御(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "防御割合", unit: "+%", getValue: (m) => parseFloat(m[1]) },
-    { pattern: /防御(?:力)?[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "防御固定", unit: "+", getValue: (m) => parseInt(m[1]) },
+    { pattern: /巨大化する度に.*?防御(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "防御割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) * 5 },
+    { pattern: /巨大化する度に.*?防御(?:力)?[がを]?([+＋-－]?\d+)(?:上昇|アップ|UP|増加)/i, type: "防御固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) * 5 },
+    { pattern: /防御(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "防御割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
+    { pattern: /防御(?:力)?[がを]?([+＋-－]?\d+)(?:上昇|アップ|UP|増加)/i, type: "防御固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) },
     { pattern: /防御[をが]?無視/i, type: "防御無視", unit: "", getValue: () => null },
 
     // 防御デバフ
-    { pattern: /(?:敵の)?防御(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:低下|減少|ダウン|DOWN)/i, type: "防御デバフ割合", unit: "+%", getValue: (m) => parseFloat(m[1]) },
-    { pattern: /(?:敵の)?防御(?:力)?[がを]?(\d+)(?:低下|減少|ダウン|DOWN)/i, type: "防御デバフ固定", unit: "+", getValue: (m) => parseInt(m[1]) },
+    { pattern: /(?:敵の)?防御(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:低下|減少|ダウン|DOWN)/i, type: "防御デバフ割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
+    { pattern: /(?:敵の)?防御(?:力)?[がを]?([+＋-－]?\d+)(?:低下|減少|ダウン|DOWN)/i, type: "防御デバフ固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) },
 
     // 攻撃デバフ
-    { pattern: /(?:敵の)?攻撃(?:力)?[がを]?(\d+(?:\.\d+)?)%(?:低下|減少|ダウン|DOWN)/i, type: "攻撃デバフ割合", unit: "+%", getValue: (m) => parseFloat(m[1]) },
-    { pattern: /(?:敵の)?攻撃(?:力)?[がを]?(\d+)(?:低下|減少|ダウン|DOWN)/i, type: "攻撃デバフ固定", unit: "+", getValue: (m) => parseInt(m[1]) },
+    { pattern: /(?:敵の)?攻撃(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:低下|減少|ダウン|DOWN)/i, type: "攻撃デバフ割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
+    { pattern: /(?:敵の)?攻撃(?:力)?[がを]?([+＋-－]?\d+)(?:低下|減少|ダウン|DOWN)/i, type: "攻撃デバフ固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) },
 
     // ダメージ
-    { pattern: /(?:与える)?ダメージ[がを]?(\d+(?:\.\d+)?)倍/i, type: "与ダメ", unit: "×", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /与えるダメージ[がを]?(\d+(?:\.\d+)?)倍/i, type: "与えるダメージ", unit: "×", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /与ダメ(?:ージ)?[がを]?(\d+(?:\.\d+)?)倍/i, type: "与ダメ", unit: "×", getValue: (m) => parseFloat(m[1]) },
     { pattern: /(?:受ける)?ダメージ[がを]?(\d+(?:\.\d+)?)倍/i, type: "被ダメ", unit: "×", getValue: (m) => parseFloat(m[1]) },
-    { pattern: /(?:与える)?ダメージ[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "与えるダメージ", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /与えるダメージ[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "与えるダメージ", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
+    { pattern: /与ダメ(?:ージ)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "与ダメ", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
 
     // 射程（巨大化対応：×5倍して登録）
-    { pattern: /巨大化する度に.*?射程[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "射程割合", unit: "+%", getValue: (m) => parseFloat(m[1]) * 5 },
-    { pattern: /巨大化する度に.*?射程[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "射程固定", unit: "+", getValue: (m) => parseInt(m[1]) * 5 },
-    { pattern: /射程[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "射程割合", unit: "+%", getValue: (m) => parseFloat(m[1]) },
-    { pattern: /射程[がを]?(\d+)(?:上昇|アップ|UP|増加)/i, type: "射程固定", unit: "+", getValue: (m) => parseInt(m[1]) },
+    { pattern: /巨大化する度に[^。]*?射程(?:内|の味方の)?[^\d]*([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)?/i, type: "射程割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) * 5 },
+    { pattern: /巨大化する度に[^。]*?射程(?:内|の味方の)?[^\d]*([+＋-－]?\d+)(?![％%])/i, type: "射程固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) * 5 },
+    { pattern: /射程[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "射程割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
+    { pattern: /射程[がを]?([+＋-－]?\d+)(?![％%])(?:上昇|アップ|UP|増加)/i, type: "射程固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) },
 
     // 速度・隙
-    { pattern: /(?:攻撃)?速度[がを]?(\d+(?:\.\d+)?)%(?:上昇|アップ|UP|増加)/i, type: "速度", unit: "+%", getValue: (m) => parseFloat(m[1]) },
-    { pattern: /(?:攻撃後の)?隙[がを]?(\d+(?:\.\d+)?)%(?:低下|減少|短縮)/i, type: "隙", unit: "+%", getValue: (m) => parseFloat(m[1]) },
-    { pattern: /隙[がを]?(\d+(?:\.\d+)?)%(?:増加|上昇)/i, type: "隙", unit: "-%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /(?:攻撃)?速度[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)?/i, type: "速度", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
+    { pattern: /(?:攻撃後の)?隙[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:低下|減少|短縮)/i, type: "隙", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
+    { pattern: /隙[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:増加|上昇)/i, type: "隙", unit: "-%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
 
     // 対象数
     { pattern: /(?:攻撃)?対象[がを]?(\d+)(?:体)?(?:増加|上昇|アップ|UP)/i, type: "対象数", unit: "+", getValue: (m) => parseInt(m[1]) },
@@ -71,39 +73,349 @@ const buffPatterns = [
     { pattern: /行動開始時[^。]*?気トークン[がを]?(\d+)(?:増加|上昇)/i, type: "気(ノビ)", unit: "+", getValue: (m) => parseInt(m[1]) },
     { pattern: /徐々に[^。]*?気トークン[がを]?(\d+)(?:増加|上昇)/i, type: "徐々気", unit: "+", getValue: (m) => parseFloat(m[1]) },
     { pattern: /(?:毎秒)?(?:気トークン|気)[がを]?(\d+(?:\.\d+)?)(?:増加|上昇|取得)/i, type: "自然気", unit: "+", getValue: (m) => parseFloat(m[1]) },
-    { pattern: /消費(?:気トークン|気)[がを]?(\d+(?:\.\d+)?)%(?:減少|軽減)/i, type: "気軽減", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /消費(?:気トークン|気)[がを]?(\d+(?:\.\d+)?)[％%](?:減少|軽減)/i, type: "気軽減", unit: "+%", getValue: (m) => parseFloat(m[1]) },
 
     // 計略再使用
-    { pattern: /計略(?:の)?再使用[^。]*?(\d+(?:\.\d+)?)%(?:短縮|減少)/i, type: "計略短縮", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /計略(?:の)?再使用[^。]*?(\d+(?:\.\d+)?)[％%](?:短縮|減少)/i, type: "計略短縮", unit: "+%", getValue: (m) => parseFloat(m[1]) },
 
     // 移動速度（巨大化対応：×5倍して登録）
-    { pattern: /巨大化する度に.*?移動速度[がを]?(\d+(?:\.\d+)?)%(?:低下|減少|ダウン|DOWN)/i, type: "移動低下", unit: "+%", getValue: (m) => parseFloat(m[1]) * 5 },
-    { pattern: /巨大化する度に.*?移動速度[がを]?(\d+(?:\.\d+)?)%(?:上昇|増加|アップ|UP)/i, type: "移動上昇", unit: "+%", getValue: (m) => parseFloat(m[1]) * 5 },
-    { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)%(?:低下|減少|ダウン|DOWN)/i, type: "移動低下", unit: "+%", getValue: (m) => parseFloat(m[1]) },
-    { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)%(?:上昇|増加|アップ|UP)/i, type: "移動上昇", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /巨大化する度に.*?移動速度[がを]?(\d+(?:\.\d+)?)[％%](?:低下|減少|ダウン|DOWN)/i, type: "移動低下", unit: "+%", getValue: (m) => parseFloat(m[1]) * 5 },
+    { pattern: /巨大化する度に.*?移動速度[がを]?(\d+(?:\.\d+)?)[％%](?:上昇|増加|アップ|UP)/i, type: "移動上昇", unit: "+%", getValue: (m) => parseFloat(m[1]) * 5 },
+    { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)[％%](?:低下|減少|ダウン|DOWN)/i, type: "移動低下", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)[％%](?:上昇|増加|アップ|UP)/i, type: "移動上昇", unit: "+%", getValue: (m) => parseFloat(m[1]) },
     { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)(?:に変更|へ変更)/i, type: "移動変更", unit: "+", getValue: (m) => parseFloat(m[1]) },
     { pattern: /移動(?:を)?停止/i, type: "移動停止", unit: "", getValue: () => null },
     { pattern: /(\d+)(?:マス)?(?:後退|ノックバック)/i, type: "移動後退", unit: "+", getValue: (m) => parseInt(m[1]) }
 ];
 
-// 対象キーワードマッピング（Wiki表記 → アプリ内表記）
-const targetKeywords = [
-    // 伏兵射程内（優先度高：他のパターンより先にマッチさせる）
-    { pattern: /伏兵(?:の)?射程(?:内|範囲)/i, target: "伏兵射程内" },
+const TARGET_BASE_OPTIONS = ['自身', '射程内', '全'];
+const TARGET_BASE_PRIORITY = {
+    '全': 1,
+    '射程内': 2,
+    '自身': 3
+};
+const ATTRIBUTE_MODIFIERS = ['水', '平', '山', '平山', '地獄'];
+const ATTRIBUTE_MODIFIER_SET = new Set(ATTRIBUTE_MODIFIERS);
+const TARGET_MODIFIER_ORDER = ['味方', '伏兵', '殿', '水', '平', '山', '平山', '地獄'];
+const TARGET_MODIFIER_OPTIONS = new Set(['味方', '伏兵', '殿', ...ATTRIBUTE_MODIFIERS]);
 
-    // 自身
-    { pattern: /自身/i, target: "自身" },
-
-    // 全員（射程内外問わず）
-    { pattern: /(?:全ての?|すべての?)(?:味方|城娘)/i, target: "全員" },
-    { pattern: /味方(?:の)?(?:全(?:員|体)|全て)/i, target: "全員" },
-
-    // 射程内（自分の射程内の味方/城娘）
-    { pattern: /(?:自身の)?射程(?:内|範囲)(?:の)?(?:味方|城娘)/i, target: "射程内" },
-    { pattern: /味方(?:の)?射程(?:内|範囲)/i, target: "射程内" },
-    { pattern: /範囲内(?:の)?(?:味方|城娘)/i, target: "射程内" },
-    { pattern: /味方(?:の)?(?:歌舞|本|札|杖|鈴|砲術)(?:ユニット)?/i, target: "射程内" }
+const TARGET_KEYWORD_RULES = [
+    { pattern: /自身/i, base: '自身', modifiers: [] },
+    { pattern: /殿/i, base: '全', modifiers: ['殿'] },
+    { pattern: /伏兵(?:の)?射程(?:内|範囲)/i, base: '射程内', modifiers: ['伏兵'] },
+    { pattern: /伏兵/i, base: '射程内', modifiers: ['伏兵'] },
+    { pattern: /味方(?:の)?射程(?:内|範囲)/i, base: '射程内', modifiers: ['味方'] },
+    { pattern: /(?:自身の)?射程(?:内|範囲)(?:の)?味方/i, base: '射程内', modifiers: ['味方'] },
+    { pattern: /範囲内(?:の)?味方/i, base: '射程内', modifiers: ['味方'] },
+    { pattern: /味方(?:の)?(?:全員|全て|全体)/i, base: '全', modifiers: ['味方'] },
+    { pattern: /射程(?:内|範囲)(?:の)?城娘/i, base: '射程内', modifiers: [] },
+    { pattern: /範囲内(?:の)?城娘/i, base: '射程内', modifiers: [] },
+    { pattern: /(?:全ての?|すべての?)(?:城娘|ユニット)/i, base: '全', modifiers: [] },
+    { pattern: /全員/i, base: '全', modifiers: [] },
+    { pattern: /射程(?:内|範囲)/i, base: '射程内', modifiers: [] }
 ];
+
+const ATTRIBUTE_KEYWORDS = [
+    { pattern: /水城|水属性|水の城娘/i, value: '水' },
+    { pattern: /平城|平属性|平の城娘/i, value: '平' },
+    { pattern: /山城|山属性|山の城娘/i, value: '山' },
+    { pattern: /平山城|平山属性|平山の城娘/i, value: '平山' },
+    { pattern: /地獄城|地獄属性|地獄の城娘/i, value: '地獄' }
+];
+
+const conditionPatterns = [
+    { pattern: /(水|平|山|平山|地獄|無属性)(?:城娘)?(?:のみ|限定)/i, group: 0 },
+    { pattern: /(飛行敵(?:のみ|は)?)/i, group: 0 },
+    { pattern: /(伏兵(?:のみ|出現中)?)/i, group: 0 },
+    { pattern: /(耐久\d+[％%]以[上下])/i, group: 0 },
+    { pattern: /(敵の?HP\d+[％%]以[上下])/i, group: 0 },
+    { pattern: /(敵の?防御\d+[％%]以[上下])/i, group: 0 },
+    { pattern: /(計略(?:中|発動中)|特技(?:中|発動中))/i, group: 0 },
+    { pattern: /(射程[内外]は[^。、（）]+)/i, group: 0 },
+    { pattern: /([^。、（）]+?のみ)/i, group: 1 },
+    { pattern: /([^。、（）]+?に対して)/i, group: 1 },
+    { pattern: /([^。、（）]+?の場合)/i, group: 1 },
+    { pattern: /([^。、（）]+?時)/i, group: 1 }
+];
+
+const GIANT_MULTIPLIER_TYPES = new Set([
+    '攻撃割合',
+    '攻撃固定',
+    '防御割合',
+    '防御固定',
+    '射程割合',
+    '射程固定',
+    '速度',
+    '隙',
+    '与ダメ',
+    '与えるダメージ'
+]);
+
+function extractFirstNumber(text) {
+    if (!text) return null;
+    const normalized = text.replace(/[＋]/g, '+').replace(/[－]/g, '-');
+    const match = normalized.match(/([+\-]?\d+(?:\.\d+)?)/);
+    if (!match) return null;
+    const value = parseFloat(match[1]);
+    return Number.isFinite(value) ? value : null;
+}
+
+function applyGiantMultiplierIfNeeded(result, matchText, precedingText) {
+    if (!result || typeof result.value !== 'number') return;
+    const combined = `${matchText || ''} ${precedingText || ''}`;
+    if (!/巨大化する度に/.test(combined)) return;
+    if (!GIANT_MULTIPLIER_TYPES.has(result.type)) return;
+    const originalNumber = extractFirstNumber(matchText);
+    if (originalNumber === null || originalNumber === 0) return;
+    if (Math.abs(result.value - originalNumber) < 1e-9) {
+        result.value = result.value * 5;
+    }
+}
+
+
+function determineTargetBase(text) {
+    if (/自身/i.test(text)) return '自身';
+    if (/全(?:て|体|員)/i.test(text)) return '全';
+    if (/殿/i.test(text)) return '全';
+    return '射程内';
+}
+
+function extractAttributeModifiers(text) {
+    const modifiers = new Set();
+    ATTRIBUTE_KEYWORDS.forEach(attr => {
+        if (attr.pattern.test(text)) {
+            modifiers.add(attr.value);
+        }
+    });
+    return Array.from(modifiers);
+}
+
+function detectTargetInfo(segment, context, fullText) {
+    const combined = `${segment || ''} ${context || ''}`.replace(/\s+/g, '');
+    const modifiers = new Set();
+    let base = null;
+    let basePriority = 0;
+
+    TARGET_KEYWORD_RULES.forEach(rule => {
+        if (rule.pattern.test(combined)) {
+            if (rule.base) {
+                const candidatePriority = TARGET_BASE_PRIORITY[rule.base] || 0;
+                if (candidatePriority > basePriority) {
+                    base = rule.base;
+                    basePriority = candidatePriority;
+                }
+            }
+            (rule.modifiers || []).forEach(mod => modifiers.add(mod));
+        }
+    });
+
+    extractAttributeModifiers(combined).forEach(mod => modifiers.add(mod));
+    if (fullText) {
+        extractAttributeModifiers(fullText).forEach(mod => modifiers.add(mod));
+    }
+
+    const fallbackCombined = determineTargetBase(combined);
+    const fullNormalized = (fullText || '').replace(/\s+/g, '');
+    const fallbackFull = determineTargetBase(fullNormalized);
+
+    const evaluateFallback = (candidate) => {
+        const candidatePriority = TARGET_BASE_PRIORITY[candidate] || 0;
+        if (candidatePriority > basePriority) {
+            base = candidate;
+            basePriority = candidatePriority;
+        }
+    };
+
+    if (!base) {
+        base = fallbackCombined;
+        basePriority = TARGET_BASE_PRIORITY[base] || 0;
+    } else {
+        evaluateFallback(fallbackCombined);
+    }
+
+    evaluateFallback(fallbackFull);
+
+    if (!TARGET_BASE_OPTIONS.includes(base)) {
+        base = '射程内';
+    }
+
+    return {
+        base,
+        modifiers: Array.from(modifiers)
+    };
+}
+
+const LEGACY_TARGET_RULES = [
+    { pattern: /^味方射程内$/i, base: '射程内', modifiers: ['味方'] },
+    { pattern: /^味方全員$/i, base: '全', modifiers: ['味方'] },
+    { pattern: /^味方城娘$/i, base: '全', modifiers: ['味方'] },
+    { pattern: /^味方全て$/i, base: '全', modifiers: ['味方'] },
+    { pattern: /^味方$/i, base: '全', modifiers: ['味方'] },
+    { pattern: /^射程内の?味方$/i, base: '射程内', modifiers: ['味方'] },
+    { pattern: /^射程内味方$/i, base: '射程内', modifiers: ['味方'] },
+    { pattern: /^伏兵射程内$/i, base: '射程内', modifiers: ['伏兵'] },
+    { pattern: /^伏兵$/i, base: '射程内', modifiers: ['伏兵'] },
+    { pattern: /^殿(?:のみ)?$/i, base: '全', modifiers: ['殿'] },
+    { pattern: /^全員$/i, base: '全', modifiers: [] },
+    { pattern: /^全城娘$/i, base: '全', modifiers: [] },
+    { pattern: /^全$/i, base: '全', modifiers: [] },
+    { pattern: /^射程内$/i, base: '射程内', modifiers: [] },
+    { pattern: /^自身$/i, base: '自身', modifiers: [] }
+];
+
+function translateLegacyTarget(label) {
+    if (Array.isArray(label)) {
+        label = label.filter(Boolean).join('/');
+    }
+    const text = (label || '').trim();
+    if (!text) {
+        return { base: '射程内', modifiers: [] };
+    }
+
+    if (text.includes('/')) {
+        const segments = text.split('/').filter(Boolean);
+        if (segments.length === 0) {
+            return { base: '射程内', modifiers: [] };
+        }
+        let base = segments[0];
+        let modifiers = segments.slice(1);
+        if (!TARGET_BASE_OPTIONS.includes(base)) {
+            const legacy = LEGACY_TARGET_RULES.find(rule => rule.pattern.test(text));
+            if (legacy) {
+                return { base: legacy.base, modifiers: [...legacy.modifiers] };
+            }
+            modifiers = segments;
+            base = '射程内';
+        }
+        return {
+            base,
+            modifiers: Array.from(new Set(modifiers))
+        };
+    }
+
+    const legacyMatch = LEGACY_TARGET_RULES.find(rule => rule.pattern.test(text));
+    if (legacyMatch) {
+        return { base: legacyMatch.base, modifiers: [...legacyMatch.modifiers] };
+    }
+
+    if (TARGET_BASE_OPTIONS.includes(text)) {
+        return { base: text, modifiers: [] };
+    }
+
+    if (/全/.test(text)) {
+        return { base: '全', modifiers: [] };
+    }
+    if (/射程/.test(text)) {
+        return { base: '射程内', modifiers: [] };
+    }
+    if (/自身/.test(text)) {
+        return { base: '自身', modifiers: [] };
+    }
+
+    return { base: '射程内', modifiers: text ? [text] : [] };
+}
+
+function formatTargetParts(base, modifiers) {
+    const normalizedBase = TARGET_BASE_OPTIONS.includes(base) ? base : '射程内';
+    const uniqueModifiers = Array.from(new Set((modifiers || []).filter(Boolean)));
+    if (uniqueModifiers.length === 0) {
+        return normalizedBase;
+    }
+    const orderIndex = (mod) => {
+        const order = TARGET_MODIFIER_ORDER.indexOf(mod);
+        return order === -1 ? TARGET_MODIFIER_ORDER.length + uniqueModifiers.indexOf(mod) : order;
+    };
+    const sortedModifiers = uniqueModifiers.slice().sort((a, b) => orderIndex(a) - orderIndex(b));
+    return [normalizedBase, ...sortedModifiers].join('/');
+}
+
+function cleanupCondition(condition, buffType) {
+    if (!condition) return '';
+    let text = condition;
+
+    text = text.replace(/重複なし/g, '');
+    if (buffType === '与ダメ' || buffType === '与えるダメージ') {
+        text = text.replace(/重複不可/g, '');
+    }
+
+    text = text.replace(/【([^】]+)】/g, '$1');
+    text = text.replace(/\s+/g, '');
+    text = text.replace(/^[、。]+/, '').replace(/[、。]+$/, '');
+
+    if (buffType === '速度' || buffType === '隙') {
+        if (/(攻撃|与ダメ|与えるダメ|上昇)/.test(text)) {
+            text = text.replace(/全ての.*?(?:上昇|増加)/g, '');
+        }
+        if (/(攻撃|与ダメ|与えるダメ|上昇)/.test(text)) {
+            text = '';
+        }
+    }
+
+    text = text.replace(/、{2,}/g, '、');
+    return text.trim();
+}
+
+function adjustParsedBuff(buff) {
+    if (!buff) return;
+
+    const contextText = `${buff.rawText || ''} ${buff.context || ''} ${buff.condition || ''}`;
+
+    if (!Array.isArray(buff.targetParts) || buff.targetParts.length === 0) {
+        const parsedTarget = translateLegacyTarget(buff.target);
+        const normalized = formatTargetParts(parsedTarget.base, parsedTarget.modifiers);
+        buff.targetParts = normalized.split('/').filter(Boolean);
+    }
+
+    const base = buff.targetParts[0] || '射程内';
+    let modifiers = buff.targetParts.slice(1);
+
+    if (buff.type === '速度' || buff.type === '隙') {
+        modifiers = modifiers.filter(mod => !ATTRIBUTE_MODIFIER_SET.has(mod));
+    }
+
+    if (buff.type === '気(牛)' || buff.type === '気(ノビ)') {
+        const hasExplicitAttribute = ATTRIBUTE_KEYWORDS.some(attr => attr.pattern.test(contextText));
+        if (!hasExplicitAttribute) {
+            modifiers = modifiers.filter(mod => !ATTRIBUTE_MODIFIER_SET.has(mod));
+        }
+    }
+
+    if (buff.type === '自然気') {
+        if (/撃破/.test(contextText)) {
+            if (/(城娘|味方).*撃破|撃破.*(城娘|味方)|城娘の撃破/.test(contextText)) {
+                buff.type = '気(ノビ)';
+            } else {
+                buff.type = '気(牛)';
+            }
+        }
+    }
+
+    modifiers = Array.from(new Set(modifiers));
+
+    if (buff.condition) {
+        const attributeSet = new Set(modifiers.filter(mod => ATTRIBUTE_MODIFIER_SET.has(mod)));
+        if (attributeSet.size > 0) {
+            const conditionParts = buff.condition
+                .split(/・/)
+                .map(part => part.trim())
+                .filter(Boolean);
+            const cleanedParts = conditionParts.filter(part => {
+                if (ATTRIBUTE_KEYWORDS.some(attr => attr.pattern.test(part) && attributeSet.has(attr.value))) {
+                    return false;
+                }
+                return true;
+            });
+            buff.condition = cleanedParts.join('・');
+        }
+    }
+
+    const normalizedTarget = formatTargetParts(base, modifiers);
+    buff.target = normalizedTarget;
+    buff.targetParts = normalizedTarget.split('/').filter(Boolean);
+    delete buff.context;
+    delete buff.rawText;
+}
+
 
 // Wiki URLからキャラクター情報を取得
 async function fetchFromWikiURL() {
@@ -495,57 +807,122 @@ function fillFormWithData(data) {
 
 // バフテキスト解析関数
 function parseBuffText(text) {
+    if (!text) return [];
+    const cleanedText = text.replace(/\r?\n/g, ' ');
     const results = [];
+    const seen = new Set();
 
-    // 対象を検出
-    let target = "射程内"; // デフォルト
-    for (const keyword of targetKeywords) {
-        if (keyword.pattern.test(text)) {
-            target = keyword.target;
-            break;
-        }
-    }
-
-    // 各バフパターンをマッチング
     for (const buffPattern of buffPatterns) {
-        const match = text.match(buffPattern.pattern);
-        if (match) {
+        const baseFlags = buffPattern.pattern.flags.includes('g')
+            ? buffPattern.pattern.flags
+            : buffPattern.pattern.flags + 'g';
+        const regex = new RegExp(buffPattern.pattern.source, baseFlags);
+
+        let match;
+        while ((match = regex.exec(cleanedText)) !== null) {
+            const matchText = match[0];
+            const contextStart = Math.max(0, match.index - 40);
+            const contextEnd = Math.min(cleanedText.length, regex.lastIndex + 40);
+            const context = cleanedText.slice(contextStart, contextEnd);
+
+            const targetInfo = detectBuffTarget(matchText, context, cleanedText);
+            const target = targetInfo.label;
+            const rawCondition = extractBuffCondition(context);
+            const condition = cleanupCondition(rawCondition, buffPattern.type);
             const value = buffPattern.getValue(match);
+            const normalizedValue = value === null || value === undefined ? null : Number(value);
 
-            // 条件を抽出
-            let condition = "";
+            const precedingText = cleanedText.slice(Math.max(0, match.index - 80), match.index);
+            const precedingMatches = precedingText.match(/【([^】]+)】/g) || [];
+            const precedingLabel = precedingMatches.length
+                ? precedingMatches[precedingMatches.length - 1].replace(/[【】]/g, '').trim()
+                : null;
+            const matchInnerLabels = Array.from(matchText.matchAll(/【([^】]+)】/g))
+                .map(m => m[1]?.trim())
+                .filter(Boolean);
+            const bracketLabelsSet = new Set(matchInnerLabels);
+            if (precedingLabel) {
+                bracketLabelsSet.add(precedingLabel);
+            }
 
-            // 「○○の場合」「○○時」「○○のみ」などのパターンを検出
-            const conditionPatterns = [
-                // 武器種限定（例：「近接のみ」「軍船は」）
-                /([近遠]接|[弓鉄槍刀盾歌本砲鈴杖札軍投双拳鞭茶石陣砲大ラ探人][器船舞砲剣外山貝ン検][のは])/,
-                // 属性限定（例：「水のみ」「平山は」）
-                /([水平山地無][上獄属限定のは]{1,3})/,
-                // 敵条件（例：「飛行敵は」「近接単体のみ」）
-                /([飛近遠単複][行接接体数][敵体](?:のみ|は|に対して))/,
-                // HP条件（例：「敵のHP50%以下」）
-                /(HP\d+%以[上下]|防御\d+%以[上下])/,
-                // 範囲条件（例：「射程内は」「射程外は」）
-                /(射程[内外](?:は|のみ))/,
-                // 一般的な条件（例：「〇〇の場合」「〇〇時」）
-                /([^。、]+)(?:の場合|時)/,
-                /([^。、]+)(?:のみ|に限[りる])/
-            ];
+            if (/(射程外)/.test(matchText) || /(射程外)/.test(precedingText)) {
+                continue;
+            }
 
-            for (const condPattern of conditionPatterns) {
-                const condMatch = text.match(condPattern);
-                if (condMatch) {
-                    condition = condMatch[1].trim();
-                    break;
+            const bracketLabelKey = Array.from(bracketLabelsSet).join('|');
+            const key = [
+                target,
+                buffPattern.type,
+                buffPattern.unit,
+                normalizedValue,
+                condition,
+                bracketLabelKey
+            ].join('|');
+            if (seen.has(key)) {
+                continue;
+            }
+            seen.add(key);
+
+            const result = {
+                target,
+                type: buffPattern.type,
+                unit: buffPattern.unit,
+                value: normalizedValue,
+                condition,
+                context,
+                rawText: matchText
+            };
+            if (targetInfo.parts && targetInfo.parts.length) {
+                result.targetParts = targetInfo.parts;
+            }
+            if (bracketLabelsSet.size > 0) {
+                const conditionParts = result.condition
+                    ? result.condition.split(/・/).map(part => part.trim()).filter(Boolean)
+                    : [];
+                bracketLabelsSet.forEach(label => {
+                    if (!conditionParts.includes(label)) {
+                        conditionParts.push(label);
+                    }
+                });
+                result.condition = conditionParts.join('・');
+            }
+            const derivedResults = [];
+            if (result.type === '与ダメ') {
+                const combinedText = `${matchText} ${context}`;
+                if (/攻撃(?:力)?(?:と|及び|および|並びに|・)与ダメ/.test(combinedText)) {
+                    derivedResults.push({
+                        target: result.target,
+                        targetParts: Array.isArray(result.targetParts) ? [...result.targetParts] : undefined,
+                        type: '攻撃割合',
+                        unit: result.unit,
+                        value: result.value,
+                        condition: result.condition,
+                        rawText: result.rawText,
+                        context: result.context
+                    });
                 }
             }
 
-            results.push({
-                target: target,
-                type: buffPattern.type,
-                unit: buffPattern.unit,
-                value: value,
-                condition: condition
+            applyGiantMultiplierIfNeeded(result, matchText, precedingText);
+            adjustParsedBuff(result);
+            results.push(result);
+
+            derivedResults.forEach(derived => {
+                applyGiantMultiplierIfNeeded(derived, matchText, precedingText);
+                const derivedKey = [
+                    derived.target,
+                    derived.type,
+                    derived.unit,
+                    derived.value,
+                    derived.condition,
+                    bracketLabelKey
+                ].join('|');
+                if (seen.has(derivedKey)) {
+                    return;
+                }
+                seen.add(derivedKey);
+                adjustParsedBuff(derived);
+                results.push(derived);
             });
         }
     }
@@ -553,44 +930,249 @@ function parseBuffText(text) {
     return results;
 }
 
+function detectBuffTarget(segment, context, fullText) {
+    const info = detectTargetInfo(segment, context, fullText);
+    const label = formatTargetParts(info.base, info.modifiers);
+    return {
+        label,
+        parts: label.split('/').filter(Boolean)
+    };
+}
+
+function normalizeTargetLabel(target) {
+    const parsed = translateLegacyTarget(target);
+    return formatTargetParts(parsed.base, parsed.modifiers);
+}
+
+function extractBuffCondition(text) {
+    if (!text) return '';
+    const parenthesesMatch = text.match(/[（(]([^（）()]+)[）)]/);
+    if (parenthesesMatch && parenthesesMatch[1]) {
+        return sanitizeCondition(parenthesesMatch[1]);
+    }
+
+    for (const conditionPattern of conditionPatterns) {
+        const match = text.match(conditionPattern.pattern);
+        if (match) {
+            const groupIndex = typeof conditionPattern.group === 'number' ? conditionPattern.group : (match.length > 1 ? 1 : 0);
+            const raw = match[groupIndex] || match[0];
+            const sanitized = sanitizeCondition(raw);
+            if (sanitized) {
+                return sanitized;
+            }
+        }
+    }
+
+    return '';
+}
+
+function sanitizeCondition(text) {
+    if (!text) return '';
+    let condition = text.trim();
+    condition = condition.replace(/[（）()]/g, '');
+    condition = condition.replace(/[。、]$/, '');
+    condition = condition.replace(/(?:の場合|の?時)$/i, '');
+    if (condition.endsWith('は')) {
+        condition = condition.slice(0, -1);
+    }
+    return condition.trim();
+}
+
+function formatBuffValue(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    if (typeof value === 'number') {
+        if (Number.isInteger(value)) {
+            return value.toString();
+        }
+        return parseFloat(value.toFixed(2)).toString();
+    }
+    return String(value);
+}
+
+const SPECIAL_TARGET_KEYWORDS = ['味方', '伏兵', '殿', '水', '平', '山', '平山', '地獄'];
+
+function isSpecialTarget(targetText) {
+    if (!targetText) return false;
+    return SPECIAL_TARGET_KEYWORDS.some(keyword => targetText === keyword || targetText.includes(keyword));
+}
+
+function highlightBuffMain(mainText) {
+    if (!mainText) return mainText;
+    const parsed = parseBuff(mainText);
+    const targetParts = (parsed.targetParts && parsed.targetParts.length
+        ? parsed.targetParts
+        : [parsed.target]).filter(Boolean);
+    const targetHTML = targetParts
+        .map((part, index) => {
+            const isSpecial = index > 0 && isSpecialTarget(part);
+            const classes = isSpecial ? 'buff-target special-target' : 'buff-target';
+            return `<span class="${classes}">${part}</span>`;
+        })
+        .join('/');
+    const effect = buildEffectDisplay(parsed);
+    return effect ? `${targetHTML}/${effect}` : targetHTML;
+}
+
+function buildEffectDisplay(parsed) {
+    if (!parsed) return '';
+    let effect = parsed.type || '';
+    if (parsed.unit) {
+        effect += parsed.unit;
+    }
+    if (parsed.value !== undefined && parsed.value !== null && parsed.value !== '') {
+        effect += parsed.value;
+    }
+    return effect;
+}
+
+function buildBuffString(buff) {
+    let base;
+    let modifiers;
+
+    if (Array.isArray(buff.targetParts) && buff.targetParts.length) {
+        base = buff.targetParts[0];
+        modifiers = buff.targetParts.slice(1);
+    } else {
+        const parsedTarget = translateLegacyTarget(buff.target);
+        base = parsedTarget.base;
+        modifiers = parsedTarget.modifiers;
+    }
+
+    const normalizedTarget = formatTargetParts(base, modifiers);
+    buff.target = normalizedTarget;
+    buff.targetParts = normalizedTarget.split('/').filter(Boolean);
+
+    const type = buff.type;
+    const unit = buff.unit || '';
+    const valueText = formatBuffValue(buff.value);
+
+    let core = type;
+    if (unit && valueText) {
+        core += `${unit}${valueText}`;
+    } else if (unit && !valueText) {
+        core += unit;
+    } else if (!unit && valueText) {
+        core += valueText;
+    }
+
+    if (!core) {
+        return null;
+    }
+
+    let result = `${normalizedTarget}/${core}`;
+    if (buff.condition) {
+        result += `（${buff.condition}）`;
+    }
+    if (buff.isDuplicate) {
+        result = `[重複]${result}`;
+    }
+    return result;
+}
+
 // バフ解析結果を適切なリストに追加
 function addParsedBuffs(buffs, buffType) {
-    // buffType: 'skill' または 'strategy'
+    if (!Array.isArray(buffs) || buffs.length === 0) {
+        return 0;
+    }
 
+    let targetList = null;
+    if (buffType === 'skill') {
+        targetList = tempSkills;
+    } else if (buffType === 'strategy') {
+        targetList = tempStrategies;
+    } else if (buffType === 'formation') {
+        targetList = tempFormationSkills;
+    }
+
+    if (!targetList) {
+        return 0;
+    }
+
+    let addedCount = 0;
     buffs.forEach(buff => {
-        // バフ文字列を構築
-        let buffString;
-        if (buff.value !== null) {
-            // 値がある場合: 対象/タイプ/単位/値
-            buffString = `${buff.target}/${buff.type}/${buff.unit}/${buff.value}`;
-        } else if (buff.unit === "") {
-            // 値がなく単位も空の場合（例: 防御無視）: 対象/タイプ
-            buffString = `${buff.target}/${buff.type}`;
-        } else {
-            // 値がないが単位がある場合: 対象/タイプ/単位
-            buffString = `${buff.target}/${buff.type}/${buff.unit}`;
+        const buffString = buildBuffString(buff);
+        if (!buffString) {
+            return;
         }
-
-        // 条件がある場合は括弧で追加
-        const fullBuffString = buff.condition
-            ? `${buffString}（${buff.condition}）`
-            : buffString;
-
-        if (buffType === 'skill') {
-            tempSkills.push(fullBuffString);
-        } else if (buffType === 'strategy') {
-            tempStrategies.push(fullBuffString);
+        if (!targetList.includes(buffString)) {
+            targetList.push(buffString);
+            addedCount += 1;
         }
     });
 
-    // リストを更新
     if (buffType === 'skill') {
         renderBuffsList('skillsList', tempSkills, 'skill');
     } else if (buffType === 'strategy') {
         renderBuffsList('strategiesList', tempStrategies, 'strategy');
+    } else if (buffType === 'formation') {
+        renderBuffsList('formationsList', tempFormationSkills, 'formation');
+    }
+
+    return addedCount;
+}
+
+function getSkillTargetValue() {
+    const base = getSelectedValue('skillTargetBase');
+    if (!base) return '';
+    const modifiers = getSelectedValues('skillTargetModifier');
+    const customInput = document.getElementById('skillTargetCustom');
+    let customMods = [];
+    if (customInput && customInput.value.trim()) {
+        customMods = customInput.value.trim().split(/[、,\/\s]+/).filter(Boolean);
+    }
+    const uniqueModifiers = Array.from(new Set([...modifiers, ...customMods]));
+    return formatTargetParts(base, uniqueModifiers);
+}
+
+function setSkillTargetFromString(targetText) {
+    const parsed = translateLegacyTarget(targetText);
+    const normalizedLabel = formatTargetParts(parsed.base, parsed.modifiers);
+    const parts = normalizedLabel.split('/').filter(Boolean);
+    setSkillTargetBase(parts[0]);
+    setSkillTargetModifiers(parts.slice(1));
+}
+
+function setSkillTargetFromParts(parts) {
+    const parsed = translateLegacyTarget(parts);
+    const normalizedLabel = formatTargetParts(parsed.base, parsed.modifiers);
+    const normalizedParts = normalizedLabel.split('/').filter(Boolean);
+    setSkillTargetBase(normalizedParts[0]);
+    setSkillTargetModifiers(normalizedParts.slice(1));
+}
+
+function setSkillTargetBase(base) {
+    const baseValue = TARGET_BASE_OPTIONS.includes(base) ? base : '射程内';
+    const buttons = document.querySelectorAll('[data-group="skillTargetBase"]');
+    let applied = false;
+    buttons.forEach(btn => {
+        const isActive = btn.dataset.value === baseValue;
+        btn.classList.toggle('active', isActive);
+        if (isActive) {
+            applied = true;
+        }
+    });
+    if (!applied && buttons.length > 0) {
+        buttons[0].classList.add('active');
     }
 }
 
+function setSkillTargetModifiers(modifiers = []) {
+    const uniqueModifiers = Array.from(new Set((Array.isArray(modifiers) ? modifiers : [modifiers]).filter(Boolean)));
+    const buttons = document.querySelectorAll('[data-group="skillTargetModifier"]');
+    const optionSet = new Set(uniqueModifiers.filter(mod => TARGET_MODIFIER_OPTIONS.has(mod)));
+
+    buttons.forEach(btn => {
+        btn.classList.toggle('active', optionSet.has(btn.dataset.value));
+    });
+
+    const customInput = document.getElementById('skillTargetCustom');
+    if (customInput) {
+        const customMods = uniqueModifiers.filter(mod => !TARGET_MODIFIER_OPTIONS.has(mod));
+        customInput.value = customMods.join(' ');
+    }
+}
 // 特技テキストから解析してバフを追加
 function analyzeAndAddSkill(description) {
     const buffs = parseBuffText(description);
@@ -599,9 +1181,14 @@ function analyzeAndAddSkill(description) {
         return;
     }
 
-    addParsedBuffs(buffs, 'skill');
-    alert(`${buffs.length}個のバフを検出し、特技リストに追加しました。`);
+    const addedCount = addParsedBuffs(buffs, 'skill');
+    if (addedCount === 0) {
+        alert('新しいバフは検出されませんでした（既にリストに存在します）。');
+    } else {
+        alert(`${addedCount}個のバフを検出し、特技リストに追加しました。`);
+    }
 }
+
 
 // 計略テキストから解析してバフを追加
 function analyzeAndAddStrategy(description) {
@@ -611,9 +1198,14 @@ function analyzeAndAddStrategy(description) {
         return;
     }
 
-    addParsedBuffs(buffs, 'strategy');
-    alert(`${buffs.length}個のバフを検出し、計略リストに追加しました。`);
+    const addedCount = addParsedBuffs(buffs, 'strategy');
+    if (addedCount === 0) {
+        alert('新しいバフは検出されませんでした（既にリストに存在します）。');
+    } else {
+        alert(`${addedCount}個のバフを検出し、計略リストに追加しました。`);
+    }
 }
+
 
 // 折りたたみ機能
 function toggleCollapsible(labelElement) {
@@ -669,8 +1261,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // このボタンにactiveを追加
                 this.classList.add('active');
             }
+
         });
     });
+
+    setSkillTargetBase('射程内');
+    setSkillTargetModifiers([]);
 });
 
 // 選択された値を取得（単一選択）
@@ -863,15 +1459,20 @@ function saveFormationsData() {
 
 // バフ追加機能
 function addSkillBuff() {
-    const target = getSelectedValue('skillTarget');
+    const target = getSkillTargetValue();
     const type = getSelectedValue('skillType');
     const value = document.getElementById('skillValue').value;
     const unit = document.getElementById('skillUnit').value;
     const condition = document.getElementById('skillCondition').value.trim();
     const isDuplicate = document.getElementById('skillDuplicate').checked;
 
-    if (!target || !type || !value) {
-        alert('全ての項目を選択・入力してください');
+    if (!target) {
+        alert('対象を選択してください');
+        return;
+    }
+
+    if (!type || !value) {
+        alert('バフ種と数値を入力してください');
         return;
     }
 
@@ -981,15 +1582,16 @@ function renderBuffsList(containerId, buffs, type) {
 
         // 条件部分（）または()を分離
         const conditionMatch = displayBuff.match(/[（(](.+)[）)]$/);
-        const mainText = conditionMatch ? displayBuff.replace(/[（(].+[）)]$/, '') : displayBuff;
-        const condition = conditionMatch ? conditionMatch[1] : null;
+       const mainText = conditionMatch ? displayBuff.replace(/[（(].+[）)]$/, '') : displayBuff;
+       const condition = conditionMatch ? conditionMatch[1] : null;
+        const highlightedMain = highlightBuffMain(mainText);
 
         // 重複バッジ
         const duplicateBadge = isDuplicate ? '<span style="background: #ffc107; color: #333; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; margin-right: 5px;">重複</span>' : '';
 
         const buffContent = condition
-            ? `<div class="buff-content" onclick="editBuff('${type}', ${index})">${duplicateBadge}<span class="buff-main">${mainText}</span><span class="buff-condition">${condition}</span></div>`
-            : `<div class="buff-content" onclick="editBuff('${type}', ${index})">${duplicateBadge}<span class="buff-main">${mainText}</span></div>`;
+            ? `<div class="buff-content" onclick="editBuff('${type}', ${index})">${duplicateBadge}<span class="buff-main">${highlightedMain}</span><span class="buff-condition">${condition}</span></div>`
+            : `<div class="buff-content" onclick="editBuff('${type}', ${index})">${duplicateBadge}<span class="buff-main">${highlightedMain}</span></div>`;
 
         tag.innerHTML = `
             ${buffContent}
@@ -1005,7 +1607,6 @@ function editBuff(type, index) {
 
     if (type === 'skill') {
         buff = tempSkills[index];
-        targetId = 'skillTarget';
         typeId = 'skillType';
         valueId = 'skillValue';
         unitId = 'skillUnit';
@@ -1037,7 +1638,15 @@ function editBuff(type, index) {
     const parsed = parseBuff(buff);
 
     // フォームに値を設定
-    setSelectedButton(targetId, parsed.target);
+    if (type === 'skill') {
+        if (parsed.targetParts) {
+            setSkillTargetFromParts(parsed.targetParts);
+        } else {
+            setSkillTargetFromString(parsed.target);
+        }
+    } else if (targetId) {
+        setSelectedButton(targetId, parsed.target);
+    }
     setSelectedButton(typeId, parsed.type);
     document.getElementById(valueId).value = parsed.value;
     document.getElementById(unitId).value = parsed.unit;
@@ -1069,35 +1678,54 @@ function parseBuff(buffText) {
     const condition = conditionMatch ? conditionMatch[1] : '';
     const mainText = conditionMatch ? cleanText.replace(/[（(].+[）)]$/, '') : cleanText;
 
-    // 対象とバフ内容を分離
-    const parts = mainText.split('/');
-    const target = parts[0];
-    const buffPart = parts[1];
+    const segments = mainText.split('/').filter(part => part !== undefined);
+    let targetSegments = [];
+    let effectSegment = '';
 
-    // 単位と数値を抽出
+    if (segments.length === 0) {
+        targetSegments = ['射程内'];
+    } else if (segments.length === 1) {
+        targetSegments = [segments[0]];
+    } else {
+        effectSegment = segments.pop() || '';
+        targetSegments = segments;
+    }
+
+    const targetParts = targetSegments.filter(Boolean);
+    const translatedTarget = translateLegacyTarget(targetParts);
+    const target = formatTargetParts(translatedTarget.base, translatedTarget.modifiers);
+    const normalizedTargetParts = target.split('/').filter(Boolean);
+
     let unit = '';
     let type = '';
     let value = '';
 
-    // 単位を検出（長いものから順に）
-    if (buffPart.includes('+%')) {
-        unit = '+%';
-    } else if (buffPart.includes('-%')) {
-        unit = '-%';
-    } else if (buffPart.includes('×')) {
-        unit = '×';
-    } else if (buffPart.includes('+')) {
-        unit = '+';
-    } else if (buffPart.includes('-')) {
-        unit = '-';
+    const unitCandidates = ['+%', '-%', '×', '+', '-'];
+    const detectedUnit = unitCandidates.find(u => effectSegment.includes(u));
+
+    if (detectedUnit) {
+        const unitIndex = effectSegment.indexOf(detectedUnit);
+        type = effectSegment.substring(0, unitIndex);
+        value = effectSegment.substring(unitIndex + detectedUnit.length);
+        unit = detectedUnit;
+    } else {
+        type = effectSegment;
+        value = '';
+        unit = '';
     }
 
-    // バフ種と数値を分離
-    const unitIndex = buffPart.indexOf(unit);
-    type = buffPart.substring(0, unitIndex);
-    value = buffPart.substring(unitIndex + unit.length);
+    let result = {
+        target,
+        targetParts: normalizedTargetParts,
+        type: type.trim(),
+        value: value.trim(),
+        unit,
+        condition: cleanupCondition(condition, type.trim()),
+        isDuplicate
+    };
 
-    return { target, type, value, unit, condition, isDuplicate };
+    adjustParsedBuff(result);
+    return result;
 }
 
 // ボタンを選択状態にする
@@ -1223,6 +1851,9 @@ function clearForm() {
         btn.classList.remove('active');
     });
 
+    setSkillTargetBase('射程内');
+    setSkillTargetModifiers([]);
+
     // フォームタイトルとボタンを元に戻す
     document.getElementById('formTitle').textContent = '新規キャラクター追加';
     document.getElementById('submitBtn').textContent = 'キャラクター追加';
@@ -1247,6 +1878,8 @@ function editCharacter(id) {
 
     // ボタンの選択状態を復元
     document.querySelectorAll('.select-button').forEach(btn => btn.classList.remove('active'));
+    setSkillTargetBase('射程内');
+    setSkillTargetModifiers([]);
     if (char.weaponRange) {
         const rangeBtn = document.querySelector(`[data-group="weaponRange"][data-value="${char.weaponRange}"]`);
         if (rangeBtn) rangeBtn.classList.add('active');
@@ -1303,9 +1936,10 @@ function formatBuffWithCondition(buffText) {
     if (conditionMatch) {
         const mainText = buffText.replace(/[（(].+[）)]$/, '');
         const condition = conditionMatch[1];
-        return `${mainText}<br><span style="font-size: 10px; opacity: 0.8; font-style: italic;">${condition}</span>`;
+        const highlighted = highlightBuffMain(mainText);
+        return `${highlighted}<br><span style="font-size: 10px; opacity: 0.8; font-style: italic;">${condition}</span>`;
     }
-    return buffText;
+    return highlightBuffMain(buffText);
 }
 
 // キャラクター一覧を表示
