@@ -67,17 +67,33 @@ const buffPatterns = [
     { pattern: /消費(?:気トークン|気)[がを]?(\d+(?:\.\d+)?)%(?:減少|軽減)/i, type: "気軽減", unit: "+%", getValue: (m) => parseFloat(m[1]) },
 
     // 計略再使用
-    { pattern: /計略(?:の)?再使用[^。]*?(\d+(?:\.\d+)?)%(?:短縮|減少)/i, type: "計略短縮", unit: "+%", getValue: (m) => parseFloat(m[1]) }
+    { pattern: /計略(?:の)?再使用[^。]*?(\d+(?:\.\d+)?)%(?:短縮|減少)/i, type: "計略短縮", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+
+    // 移動速度
+    { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)%(?:低下|減少|ダウン|DOWN)/i, type: "移動低下", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)%(?:上昇|増加|アップ|UP)/i, type: "移動上昇", unit: "+%", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)(?:に変更|へ変更)/i, type: "移動変更", unit: "+", getValue: (m) => parseFloat(m[1]) },
+    { pattern: /移動(?:を)?停止/i, type: "移動停止", unit: "", getValue: () => null },
+    { pattern: /(\d+)(?:マス)?(?:後退|ノックバック)/i, type: "移動後退", unit: "+", getValue: (m) => parseInt(m[1]) }
 ];
 
-// 対象キーワードマッピング
+// 対象キーワードマッピング（Wiki表記 → アプリ内表記）
 const targetKeywords = [
-    { pattern: /自身/i, target: "自身" },
-    { pattern: /味方(?:の)?(?:全(?:員|体)|全て)/i, target: "味方全員" },
-    { pattern: /味方(?:の)?射程(?:内|範囲)/i, target: "味方射程内" },
+    // 伏兵射程内（優先度高：他のパターンより先にマッチさせる）
     { pattern: /伏兵(?:の)?射程(?:内|範囲)/i, target: "伏兵射程内" },
-    { pattern: /味方(?:の)?(?:歌舞|本|札|杖|鈴|砲術)(?:ユニット)?/i, target: "味方射程内" },
-    { pattern: /範囲内(?:の)?(?:味方|全(?:員|体))/i, target: "味方射程内" }
+
+    // 自身
+    { pattern: /自身/i, target: "自身" },
+
+    // 全員（射程内外問わず）
+    { pattern: /(?:全ての?|すべての?)(?:味方|城娘)/i, target: "全員" },
+    { pattern: /味方(?:の)?(?:全(?:員|体)|全て)/i, target: "全員" },
+
+    // 射程内（自分の射程内の味方/城娘）
+    { pattern: /(?:自身の)?射程(?:内|範囲)(?:の)?(?:味方|城娘)/i, target: "射程内" },
+    { pattern: /味方(?:の)?射程(?:内|範囲)/i, target: "射程内" },
+    { pattern: /範囲内(?:の)?(?:味方|城娘)/i, target: "射程内" },
+    { pattern: /味方(?:の)?(?:歌舞|本|札|杖|鈴|砲術)(?:ユニット)?/i, target: "射程内" }
 ];
 
 // Wiki URLからキャラクター情報を取得
@@ -427,7 +443,7 @@ function parseBuffText(text) {
     const results = [];
 
     // 対象を検出
-    let target = "味方射程内"; // デフォルト
+    let target = "射程内"; // デフォルト
     for (const keyword of targetKeywords) {
         if (keyword.pattern.test(text)) {
             target = keyword.target;
@@ -441,14 +457,24 @@ function parseBuffText(text) {
         if (match) {
             const value = buffPattern.getValue(match);
 
-            // 条件を抽出（簡易版）
+            // 条件を抽出
             let condition = "";
 
-            // 「○○の場合」「○○時」などのパターンを検出
+            // 「○○の場合」「○○時」「○○のみ」などのパターンを検出
             const conditionPatterns = [
+                // 武器種限定（例：「近接のみ」「軍船は」）
+                /([近遠]接|[弓鉄槍刀盾歌本砲鈴杖札軍投双拳鞭茶石陣砲大ラ探人][器船舞砲剣外山貝ン検][のは])/,
+                // 属性限定（例：「水のみ」「平山は」）
+                /([水平山地無][上獄属限定のは]{1,3})/,
+                // 敵条件（例：「飛行敵は」「近接単体のみ」）
+                /([飛近遠単複][行接接体数][敵体](?:のみ|は|に対して))/,
+                // HP条件（例：「敵のHP50%以下」）
+                /(HP\d+%以[上下]|防御\d+%以[上下])/,
+                // 範囲条件（例：「射程内は」「射程外は」）
+                /(射程[内外](?:は|のみ))/,
+                // 一般的な条件（例：「〇〇の場合」「〇〇時」）
                 /([^。、]+)(?:の場合|時)/,
-                /([^。、]+)に対して/,
-                /([^。、]+)のみ/
+                /([^。、]+)(?:のみ|に限[りる])/
             ];
 
             for (const condPattern of conditionPatterns) {
@@ -1536,6 +1562,11 @@ function calculateDetailedBuffScores() {
         allEffects.forEach(effect => {
             // 重複バフはスキップ（グラフに含めない）
             if (effect.startsWith('[重複]')) {
+                return;
+            }
+
+            // 「自身」バフは編成比較から除外（ダメージ計算では使用）
+            if (effect.startsWith('自身/')) {
                 return;
             }
 
