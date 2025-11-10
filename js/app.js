@@ -167,6 +167,9 @@ const conditionPatterns = [
 ];
 
 const DUPLICATE_HINT_REGEX = /(効果重複|重複可|重複可能)/;
+const SELF_ONLY_NOTE_REGEX = /(?:\(|（)?(?:自分|自身)のみ(?:\)|）)?/;
+const SELF_ONLY_TARGET_TYPES = new Set(['攻撃割合', '攻撃固定', '与ダメ', '与えるダメージ']);
+const ENEMY_KEYWORD_REGEX = /(敵|被ダメ|敵方)/;
 
 const GIANT_MULTIPLIER_TYPES = new Set([
     '攻撃割合',
@@ -911,6 +914,7 @@ function parseBuffText(text) {
     const cleanedText = text.replace(/\r?\n/g, ' ');
     const expandedStatsText = expandSharedStatBuffs(cleanedText);
     const sourceText = expandSharedStatDebuffs(expandedStatsText);
+    const hasSelfOnlyNote = SELF_ONLY_NOTE_REGEX.test(sourceText);
     const results = [];
     const seen = new Set();
     const sentenceBoundaryChars = ['。', '！', '？'];
@@ -1111,17 +1115,18 @@ function parseBuffText(text) {
                     result.targetParts = normalizedTarget.split('/').filter(Boolean);
                 }
             }
-            const selfOnlyHint = /(?:自分|自身)のみ/.test(`${sentenceText}${afterContext}`);
-            if (selfOnlyHint) {
-                const mentionsEnemy = /(敵|被ダメ|被害|敵方)/.test(`${matchText}${beforeContext}${afterContext}`);
-                if (!mentionsEnemy) {
+            if (hasSelfOnlyNote && SELF_ONLY_TARGET_TYPES.has(result.type)) {
+                const baseTarget = Array.isArray(result.targetParts) && result.targetParts.length
+                    ? result.targetParts[0]
+                    : result.target;
+                if (baseTarget === '射程内' && !ENEMY_KEYWORD_REGEX.test(matchText)) {
                     const normalizedTarget = formatTargetParts('自身', Array.isArray(result.targetParts) ? result.targetParts.slice(1) : []);
                     result.target = normalizedTarget;
                     result.targetParts = normalizedTarget.split('/').filter(Boolean);
                 }
             }
-            // 明示的に「対象」や「敵」が出てくる場合は射程内扱い
-            if (result.target === '自身' && /対象|敵/.test(sentenceText)) {
+            // 明示的に「対象」や「敵」が出てくる場合は射程内扱い（ただし自分のみ注記がなければ）
+            if (result.target === '自身' && /対象|敵/.test(sentenceText) && (!hasSelfOnlyNote || ENEMY_KEYWORD_REGEX.test(matchText))) {
                 const enemyTargetText = sentenceText.replace(/\s+/g, '');
                 if (/射程/.test(enemyTargetText) || /対象の/.test(enemyTargetText)) {
                     const normalizedTarget = formatTargetParts('射程内', []);
