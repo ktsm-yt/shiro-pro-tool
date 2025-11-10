@@ -115,9 +115,9 @@ const buffPatterns = [
 
 const TARGET_BASE_OPTIONS = ['自身', '射程内', '全'];
 const TARGET_BASE_PRIORITY = {
-    '全': 1,
+    '全': 3,
     '射程内': 2,
-    '自身': 3
+    '自身': 1
 };
 const ATTRIBUTE_MODIFIERS = ['水', '平', '山', '平山', '地獄'];
 const ATTRIBUTE_MODIFIER_SET = new Set(ATTRIBUTE_MODIFIERS);
