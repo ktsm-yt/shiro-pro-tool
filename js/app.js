@@ -1111,6 +1111,15 @@ function parseBuffText(text) {
                     result.targetParts = normalizedTarget.split('/').filter(Boolean);
                 }
             }
+            const selfOnlyHint = /(?:自分|自身)のみ/.test(`${sentenceText}${afterContext}`);
+            if (selfOnlyHint) {
+                const mentionsEnemy = /(敵|被ダメ|被害|敵方)/.test(`${matchText}${beforeContext}${afterContext}`);
+                if (!mentionsEnemy) {
+                    const normalizedTarget = formatTargetParts('自身', Array.isArray(result.targetParts) ? result.targetParts.slice(1) : []);
+                    result.target = normalizedTarget;
+                    result.targetParts = normalizedTarget.split('/').filter(Boolean);
+                }
+            }
             // 明示的に「対象」や「敵」が出てくる場合は射程内扱い
             if (result.target === '自身' && /対象|敵/.test(sentenceText)) {
                 const enemyTargetText = sentenceText.replace(/\s+/g, '');
