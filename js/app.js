@@ -1219,6 +1219,7 @@ function sanitizeCondition(text) {
     condition = condition.replace(/(?:が|は)?対象$/g, '');
     condition = condition.replace(/(特殊攻撃)で$/i, '$1');
     condition = condition.replace(/(?:上昇|増加)(?=[^。、（）]*には効果\d+倍)/g, '');
+    condition = condition.replace(/ゲージ蓄積[^。、（）]*/g, '');
     if (/には効果\d+倍/.test(condition)) {
         const marker = condition.lastIndexOf('には効果');
         const punctuation = Math.max(
