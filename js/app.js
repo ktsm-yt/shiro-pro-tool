@@ -1154,12 +1154,14 @@ function parseBuffText(text) {
                 }
             }
 
-            applyGiantMultiplierIfNeeded(result, matchText, normalizedValue);
+            const baseValue = buffPattern.type === result.type ? normalizedValue : undefined;
+            applyGiantMultiplierIfNeeded(result, matchText, baseValue);
             adjustParsedBuff(result);
             results.push(result);
 
             derivedResults.forEach(derived => {
-                applyGiantMultiplierIfNeeded(derived, matchText, normalizedValue);
+                const derivedBaseValue = buffPattern.type === derived.type ? normalizedValue : undefined;
+                applyGiantMultiplierIfNeeded(derived, matchText, derivedBaseValue);
                 const derivedKey = [
                     derived.target,
                     derived.type,
