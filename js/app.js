@@ -969,6 +969,7 @@ function parseBuffText(text) {
             const contextStart = Math.max(sentenceStart, match.index - 40);
             const contextEnd = Math.min(sentenceEnd, regex.lastIndex + 40);
             const context = sourceText.slice(contextStart, contextEnd);
+            const snippetAroundMatch = sourceText.slice(Math.max(0, match.index - 2), Math.min(sourceText.length, regex.lastIndex + 2));
             const duplicateAfterMatchPattern = /^\s*(?:、|,)?[（(]?(効果重複|重複可|重複可能)[）)]?/;
             const duplicateAfterMatch = duplicateAfterMatchPattern.test(afterContext);
             if (duplicateAfterMatch) {
@@ -988,10 +989,8 @@ function parseBuffText(text) {
                 continue;
             }
 
-            if (buffPattern.type === '速度') {
-                if (/移動速度/.test(matchText)) {
-                    continue;
-                }
+            if (buffPattern.type === '速度' && /移動速度/.test(snippetAroundMatch)) {
+                continue;
             }
 
             const targetInfo = detectBuffTarget(matchText, beforeContext, afterContext, sourceText);
