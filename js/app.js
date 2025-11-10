@@ -1071,6 +1071,13 @@ function parseBuffText(text) {
                 });
                 result.condition = conditionParts.join('・');
             }
+            if (result.type === '与ダメ回復' && result.condition) {
+                const filtered = result.condition
+                    .split(/・/)
+                    .map(part => part.trim())
+                    .filter(part => part && (!/最大/.test(part) || /回復/.test(part)));
+                result.condition = filtered.join('・');
+            }
             if (result.type === '与ダメ回復') {
                 const noteRegex = /[\[【]([^】\]]+)[】\]]は([+＋-－]?\d+)%回復/i;
                 let noteMatch = noteRegex.exec(result.context || '');
