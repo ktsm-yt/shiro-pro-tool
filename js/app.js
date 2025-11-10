@@ -1000,9 +1000,6 @@ function parseBuffText(text) {
                     condition = '';
                 }
             }
-            if ((buffPattern.type === '与ダメ' || buffPattern.type === '与えるダメージ') && /(最大|最大化)/.test(sentenceText)) {
-                continue;
-            }
             const value = buffPattern.getValue(match);
             const normalizedValue = value === null || value === undefined ? null : Number(value);
 
