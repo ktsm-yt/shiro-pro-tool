@@ -58,10 +58,10 @@ const buffPatterns = [
     { pattern: /与ダメ(?:ージ)?(?:の)?([+＋-－]?\d+)[％%][^。]*回復/i, type: "与ダメ回復", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
     { pattern: /与ダメ(?:ージ)?[がを]?(\d+(?:\.\d+)?)倍/i, type: "与ダメ", unit: "×", getValue: (m) => parseFloat(m[1]) },
     { pattern: /(?:受ける|被)ダメ(?:ージ)?[がを]?(\d+(?:\.\d+)?)倍/i, type: "被ダメ", unit: "×", getValue: (m) => parseFloat(m[1]) },
-    { pattern: /(?:受ける|被)ダメ(?:ージ)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](上昇|増加|低下|減少|DOWN|ダウン)/i, type: "被ダメ", unit: "+%", getValue: (m) => {
+    { pattern: /(?:受ける|被)ダメ(?:ージ)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](上昇|増加|低下|減少|DOWN|ダウン|軽減)/i, type: "被ダメ", unit: "+%", getValue: (m) => {
         const value = parseFloat(m[1].replace('＋', '+').replace('－', '-'));
         const action = m[2].toLowerCase();
-        if (/低下|減少|down|ダウン/.test(action)) {
+        if (/低下|減少|down|ダウン|軽減/.test(action)) {
             return -Math.abs(value);
         }
         return value;
