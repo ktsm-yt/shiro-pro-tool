@@ -278,7 +278,7 @@ function detectTargetInfo(segment, beforeContext, afterContext, fullText) {
     const normalizedFull = normalize(fullText);
     const contexts = [
         { text: normalizedSegment, weight: 4 },
-        { text: normalizedSegment + normalizedBefore, weight: 3 },
+        { text: normalizedBefore + normalizedSegment, weight: 3 },
         { text: normalizedSegment + normalizedAfter, weight: 2 },
         { text: normalizedBefore, weight: 1.5 },
         { text: normalizedAfter, weight: 1 }
