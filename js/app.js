@@ -402,6 +402,9 @@ function formatTargetParts(base, modifiers) {
 function detectTargetOverride(conditionText, beforeContext, afterContext) {
     const segments = [conditionText, beforeContext, afterContext].filter(Boolean);
     for (const segment of segments) {
+        if (/(自分|自身)のみ/.test(segment)) {
+            return '自身';
+        }
         if (CONDITION_SELF_KEYWORDS.test(segment)) {
             return '自身';
         }
