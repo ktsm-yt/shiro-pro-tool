@@ -73,7 +73,7 @@ const buffPatterns = [
     { pattern: /巨大化する度に[^。]*?射程(?=[がをと])[^\d]*([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)?/i, type: "射程割合", unit: "+%", skipGiantMultiplier: true, getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) * 5 },
     { pattern: /巨大化する度に[^。]*?射程(?=[がをと])[^\d]*([+＋-－]?\d+)(?![％%])/i, type: "射程固定", unit: "+", skipGiantMultiplier: true, getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) * 5 },
     { pattern: /射程(?:[がをと]|は)?\s*([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "射程割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
-    { pattern: /射程(?:[がをと]|は)?\s*([+＋-－]?\d+(?:\.\d+)?)[％%](?:低下|減少|ダウン|DOWN)/i, type: "射程割合", unit: "-%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
+    { pattern: /射程(?:[がをと]|は)?\s*([+＋-－]?\d+(?:\.\d+)?)[％%](?:低下|減少|ダウン|DOWN)/i, type: "射程割合", unit: "+%", getValue: (m) => -Math.abs(parseFloat(m[1].replace('＋', '+').replace('－', '-'))) },
     { pattern: /射程(?:[がをと]|は)?\s*([+＋-－]?\d+)(?![％%])(?:上昇|アップ|UP|増加)/i, type: "射程固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) },
 
     // 速度・隙
