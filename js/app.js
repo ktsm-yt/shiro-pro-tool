@@ -999,7 +999,8 @@ function parseBuffText(text) {
 
             const targetInfo = detectBuffTarget(matchText, beforeContext, afterContext, sourceText);
             let targetLabel = targetInfo.label;
-            if (ALL_ENEMY_REGEX.test(matchText)) {
+            const enemyContextText = `${beforeContext}${matchText}`;
+            if (ALL_ENEMY_REGEX.test(enemyContextText)) {
                 const parsedTarget = translateLegacyTarget(targetLabel);
                 targetLabel = formatTargetParts('全', parsedTarget.modifiers);
                 targetInfo.parts = targetLabel.split('/').filter(Boolean);
