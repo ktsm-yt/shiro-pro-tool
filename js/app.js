@@ -176,6 +176,8 @@ const GIANT_MULTIPLIER_TYPES = new Set([
     '攻撃固定',
     '防御割合',
     '防御固定',
+    '防御デバフ割合',
+    '防御デバフ固定',
     '射程割合',
     '射程固定',
     '速度',
@@ -183,6 +185,7 @@ const GIANT_MULTIPLIER_TYPES = new Set([
     '与ダメ',
     '与えるダメージ',
     '与ダメ回復',
+    '被ダメ',
     '移動低下',
     '移動上昇',
     '移動変更',
@@ -418,6 +421,7 @@ function cleanupCondition(condition, buffType) {
     let text = condition;
 
     text = text.replace(/重複なし/g, '');
+    text = text.replace(DUPLICATE_HINT_REGEX, '');
     if (buffType === '与ダメ' || buffType === '与えるダメージ') {
         text = text.replace(/重複不可/g, '');
     }
@@ -961,10 +965,15 @@ function parseBuffText(text) {
             const beforeContextStart = Math.max(sentenceStart, match.index - 60);
             const afterContextEnd = Math.min(sentenceEnd, regex.lastIndex + 60);
             const beforeContext = sourceText.slice(beforeContextStart, match.index);
-            const afterContext = sourceText.slice(regex.lastIndex, afterContextEnd);
+            let afterContext = sourceText.slice(regex.lastIndex, afterContextEnd);
             const contextStart = Math.max(sentenceStart, match.index - 40);
             const contextEnd = Math.min(sentenceEnd, regex.lastIndex + 40);
             const context = sourceText.slice(contextStart, contextEnd);
+            const duplicateAfterMatchPattern = /^\s*(?:、|,)?[（(]?(効果重複|重複可|重複可能)[）)]?/;
+            const duplicateAfterMatch = duplicateAfterMatchPattern.test(afterContext);
+            if (duplicateAfterMatch) {
+                afterContext = afterContext.replace(duplicateAfterMatchPattern, '');
+            }
             const sentenceHasGiant = /巨大化する度に/.test(sentenceText);
             const matchHasGiant = /巨大化する度に/.test(matchText);
             let giantBeforeMatch = false;
@@ -1057,7 +1066,8 @@ function parseBuffText(text) {
                 skipGiantMultiplier: !!buffPattern.skipGiantMultiplier
             };
             const duplicationContext = matchText;
-            if (DUPLICATE_HINT_REGEX.test(duplicationContext)) {
+            const hasDuplicateHint = DUPLICATE_HINT_REGEX.test(duplicationContext) || duplicateAfterMatch;
+            if (hasDuplicateHint) {
                 result.isDuplicate = true;
                 if (result.condition) {
                     result.condition = result.condition.replace(DUPLICATE_HINT_REGEX, '').trim();
