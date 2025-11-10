@@ -26,22 +26,22 @@ const weaponMapping = {
 // バフパターンマッチング定義
 const buffPatterns = [
     // 攻撃バフ（巨大化対応：×5倍して登録）
-    { pattern: /巨大化する度に.*?攻撃(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)?/i, type: "攻撃割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) * 5 },
-    { pattern: /巨大化する度に.*?攻撃(?:力)?(?:と)?[がを]?([+＋-－]?\d+)(?![％%倍])(?:上昇|アップ|UP|増加)?/i, type: "攻撃固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) * 5 },
+    { pattern: /巨大化する度に.*?攻撃(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)?/i, type: "攻撃割合", unit: "+%", skipGiantMultiplier: true, getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) * 5 },
+    { pattern: /巨大化する度に.*?攻撃(?:力)?(?:と)?[がを]?([+＋-－]?\d+)(?![％%倍])(?:上昇|アップ|UP|増加)?/i, type: "攻撃固定", unit: "+", skipGiantMultiplier: true, getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) * 5 },
     { pattern: /攻撃(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "攻撃割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
     { pattern: /攻撃(?:力)?[がを]?([+＋-－]?\d+)(?:上昇|アップ|UP|増加)/i, type: "攻撃固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) },
     { pattern: /攻撃(?:力)?が(\d+(?:\.\d+)?)倍/i, type: "攻撃割合", unit: "×", getValue: (m) => parseFloat(m[1]) },
 
     // 防御バフ（巨大化対応：×5倍して登録）
-    { pattern: /巨大化する度に.*?防御(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "防御割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) * 5 },
-    { pattern: /巨大化する度に.*?防御(?:力)?[がを]?([+＋-－]?\d+)(?:上昇|アップ|UP|増加)/i, type: "防御固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) * 5 },
+    { pattern: /巨大化する度に.*?防御(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "防御割合", unit: "+%", skipGiantMultiplier: true, getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) * 5 },
+    { pattern: /巨大化する度に.*?防御(?:力)?[がを]?([+＋-－]?\d+)(?:上昇|アップ|UP|増加)/i, type: "防御固定", unit: "+", skipGiantMultiplier: true, getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) * 5 },
     { pattern: /防御(?:力)?[がを]?(?:[^％%]*?)([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "防御割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
     { pattern: /防御(?:力)?[がを]?([+＋-－]?\d+)(?:上昇|アップ|UP|増加)/i, type: "防御固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) },
     { pattern: /防御(?:力)?が(\d+(?:\.\d+)?)倍/i, type: "防御割合", unit: "×", getValue: (m) => parseFloat(m[1]) },
     { pattern: /防御[をが]?無視/i, type: "防御無視", unit: "", getValue: () => null },
 
     // 回復バフ（巨大化対応：×5倍して登録）
-    { pattern: /巨大化する度に.*?回復[がを]?([+＋-－]?\d+)(?:上昇|アップ|UP|増加)/i, type: "回復", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) * 5 },
+    { pattern: /巨大化する度に.*?回復[がを]?([+＋-－]?\d+)(?:上昇|アップ|UP|増加)/i, type: "回復", unit: "+", skipGiantMultiplier: true, getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) * 5 },
     { pattern: /回復[がを]?([+＋-－]?\d+)(?:上昇|アップ|UP|増加)/i, type: "回復", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) },
     { pattern: /回復[がを]?(\d+(?:\.\d+)?)倍/i, type: "回復割合", unit: "×", getValue: (m) => parseFloat(m[1]) },
 
@@ -70,8 +70,8 @@ const buffPatterns = [
     { pattern: /与ダメ(?:ージ)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "与ダメ", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
 
     // 射程（巨大化対応：×5倍して登録）
-    { pattern: /巨大化する度に[^。]*?射程(?=[がをと])[^\d]*([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)?/i, type: "射程割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) * 5 },
-    { pattern: /巨大化する度に[^。]*?射程(?=[がをと])[^\d]*([+＋-－]?\d+)(?![％%])/i, type: "射程固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) * 5 },
+    { pattern: /巨大化する度に[^。]*?射程(?=[がをと])[^\d]*([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)?/i, type: "射程割合", unit: "+%", skipGiantMultiplier: true, getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) * 5 },
+    { pattern: /巨大化する度に[^。]*?射程(?=[がをと])[^\d]*([+＋-－]?\d+)(?![％%])/i, type: "射程固定", unit: "+", skipGiantMultiplier: true, getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) * 5 },
     { pattern: /射程(?=[がをと])[がをと]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "射程割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
     { pattern: /射程(?=[がをと])[がをと]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:低下|減少|ダウン|DOWN)/i, type: "射程割合", unit: "-%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
     { pattern: /射程(?=[がをと])[がをと]?([+＋-－]?\d+)(?![％%])(?:上昇|アップ|UP|増加)/i, type: "射程固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) },
@@ -98,8 +98,8 @@ const buffPatterns = [
     { pattern: /計略(?:の)?再使用[^。]*?(\d+(?:\.\d+)?)[％%](?:短縮|減少)/i, type: "計略短縮", unit: "+%", getValue: (m) => parseFloat(m[1]) },
 
     // 移動速度（巨大化対応：×5倍して登録）
-    { pattern: /巨大化する度に.*?移動速度[がを]?(\d+(?:\.\d+)?)[％%](?:低下|減少|ダウン|DOWN)/i, type: "移動低下", unit: "-%", getValue: (m) => parseFloat(m[1]) * 5 },
-    { pattern: /巨大化する度に.*?移動速度[がを]?(\d+(?:\.\d+)?)[％%](?:上昇|増加|アップ|UP)/i, type: "移動上昇", unit: "+%", getValue: (m) => parseFloat(m[1]) * 5 },
+    { pattern: /巨大化する度に.*?移動速度[がを]?(\d+(?:\.\d+)?)[％%](?:低下|減少|ダウン|DOWN)/i, type: "移動低下", unit: "-%", skipGiantMultiplier: true, getValue: (m) => parseFloat(m[1]) * 5 },
+    { pattern: /巨大化する度に.*?移動速度[がを]?(\d+(?:\.\d+)?)[％%](?:上昇|増加|アップ|UP)/i, type: "移動上昇", unit: "+%", skipGiantMultiplier: true, getValue: (m) => parseFloat(m[1]) * 5 },
     { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)[％%](?:低下|減少|ダウン|DOWN)/i, type: "移動低下", unit: "-%", getValue: (m) => parseFloat(m[1]) },
     { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)[％%](?:上昇|増加|アップ|UP)/i, type: "移動上昇", unit: "+%", getValue: (m) => parseFloat(m[1]) },
     { pattern: /移動速度[がを]?(\d+(?:\.\d+)?)(?:に変更|へ変更)/i, type: "移動変更", unit: "+", getValue: (m) => parseFloat(m[1]) },
@@ -235,6 +235,7 @@ function extractFirstNumber(text) {
 
 function applyGiantMultiplierIfNeeded(result, matchText, baseValue, hasGiantContext) {
     if (!result || typeof result.value !== 'number') return;
+    if (result.skipGiantMultiplier) return;
     if (!hasGiantContext) return;
     if (!GIANT_MULTIPLIER_TYPES.has(result.type)) return;
     const referenceValue = (typeof baseValue === 'number' && !Number.isNaN(baseValue))
@@ -1058,7 +1059,8 @@ function parseBuffText(text) {
                 value: normalizedValue,
                 condition,
                 context,
-                rawText: matchText
+                rawText: matchText,
+                skipGiantMultiplier: !!buffPattern.skipGiantMultiplier
             };
     const duplicationContext = `${matchText}${beforeContext}${afterContext}${sentenceText}`;
             if (DUPLICATE_HINT_REGEX.test(duplicationContext)) {
@@ -1149,7 +1151,8 @@ function parseBuffText(text) {
                         condition: result.condition,
                         rawText: result.rawText,
                         context: result.context,
-                        isDuplicate: result.isDuplicate
+                        isDuplicate: result.isDuplicate,
+                        skipGiantMultiplier: !!buffPattern.skipGiantMultiplier
                     });
                 }
             }
