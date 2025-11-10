@@ -1056,7 +1056,7 @@ function parseBuffText(text) {
                 rawText: matchText,
                 skipGiantMultiplier: !!buffPattern.skipGiantMultiplier
             };
-    const duplicationContext = `${matchText}${beforeContext}${afterContext}${sentenceText}`;
+            const duplicationContext = matchText;
             if (DUPLICATE_HINT_REGEX.test(duplicationContext)) {
                 result.isDuplicate = true;
                 if (result.condition) {
