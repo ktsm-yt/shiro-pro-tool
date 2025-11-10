@@ -233,13 +233,15 @@ function extractFirstNumber(text) {
     return Number.isFinite(value) ? value : null;
 }
 
-function applyGiantMultiplierIfNeeded(result, matchText) {
+function applyGiantMultiplierIfNeeded(result, matchText, baseValue) {
     if (!result || typeof result.value !== 'number') return;
     if (!/巨大化する度に/.test(matchText || '')) return;
     if (!GIANT_MULTIPLIER_TYPES.has(result.type)) return;
-    const originalNumber = extractFirstNumber(matchText);
-    if (originalNumber === null || originalNumber === 0) return;
-    if (Math.abs(result.value - originalNumber) < 1e-9) {
+    const referenceValue = (typeof baseValue === 'number' && !Number.isNaN(baseValue))
+        ? baseValue
+        : extractFirstNumber(matchText);
+    if (referenceValue === null || referenceValue === 0) return;
+    if (Math.abs(result.value - referenceValue) < 1e-9) {
         result.value = result.value * 5;
     }
 }
@@ -1152,12 +1154,12 @@ function parseBuffText(text) {
                 }
             }
 
-            applyGiantMultiplierIfNeeded(result, matchText);
+            applyGiantMultiplierIfNeeded(result, matchText, normalizedValue);
             adjustParsedBuff(result);
             results.push(result);
 
             derivedResults.forEach(derived => {
-                applyGiantMultiplierIfNeeded(derived, matchText);
+                applyGiantMultiplierIfNeeded(derived, matchText, normalizedValue);
                 const derivedKey = [
                     derived.target,
                     derived.type,
