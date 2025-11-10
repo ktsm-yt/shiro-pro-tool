@@ -1087,6 +1087,11 @@ function parseBuffText(text) {
                         result.condition = existingNotes.join('・');
                     }
                 }
+                if (result.target === '自身' && /(射程|範囲)/.test(`${matchText}${beforeContext}${afterContext}`)) {
+                    const normalizedTarget = formatTargetParts('射程内', []);
+                    result.target = normalizedTarget;
+                    result.targetParts = normalizedTarget.split('/').filter(Boolean);
+                }
             }
             const derivedResults = [];
             if (result.type === '与ダメ') {
