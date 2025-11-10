@@ -233,9 +233,9 @@ function extractFirstNumber(text) {
     return Number.isFinite(value) ? value : null;
 }
 
-function applyGiantMultiplierIfNeeded(result, matchText, baseValue) {
+function applyGiantMultiplierIfNeeded(result, matchText, baseValue, hasGiantContext) {
     if (!result || typeof result.value !== 'number') return;
-    if (!/巨大化する度に/.test(matchText || '')) return;
+    if (!hasGiantContext) return;
     if (!GIANT_MULTIPLIER_TYPES.has(result.type)) return;
     const referenceValue = (typeof baseValue === 'number' && !Number.isNaN(baseValue))
         ? baseValue
@@ -1154,12 +1154,14 @@ function parseBuffText(text) {
                 }
             }
 
-            applyGiantMultiplierIfNeeded(result, matchText, normalizedValue);
+            const hasGiantContext = /巨大化する度に/.test(matchText) || giantBeforeMatch || sentenceHasGiant || /巨大化する度に/.test(beforeContext);
+
+            applyGiantMultiplierIfNeeded(result, matchText, normalizedValue, hasGiantContext);
             adjustParsedBuff(result);
             results.push(result);
 
             derivedResults.forEach(derived => {
-                applyGiantMultiplierIfNeeded(derived, matchText, normalizedValue);
+                applyGiantMultiplierIfNeeded(derived, matchText, normalizedValue, hasGiantContext);
                 const derivedKey = [
                     derived.target,
                     derived.type,
