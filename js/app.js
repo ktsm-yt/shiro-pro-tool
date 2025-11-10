@@ -138,6 +138,7 @@ const TARGET_KEYWORD_RULES = [
     { pattern: /射程(?:内|範囲)(?:の)?城娘/i, base: '射程内', modifiers: [] },
     { pattern: /範囲内(?:の)?城娘/i, base: '射程内', modifiers: [] },
     { pattern: /(?:全ての?|すべての?)(?:城娘|ユニット)/i, base: '全', modifiers: [] },
+    { pattern: /(?:全て|すべて)(?:の)?敵|敵全体|全敵/i, base: '全', modifiers: [] },
     { pattern: /全員/i, base: '全', modifiers: [] },
     { pattern: /射程(?:内|範囲)/i, base: '射程内', modifiers: [] }
 ];
