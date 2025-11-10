@@ -405,15 +405,10 @@ function formatTargetParts(base, modifiers) {
     return [normalizedBase, ...sortedModifiers].join('/');
 }
 
-function detectTargetOverride(conditionText, beforeContext, afterContext) {
-    const segments = [conditionText, beforeContext, afterContext].filter(Boolean);
-    for (const segment of segments) {
-        if (/(自分|自身)のみ/.test(segment)) {
-            return '自身';
-        }
-        if (CONDITION_SELF_KEYWORDS.test(segment)) {
-            return '自身';
-        }
+function detectTargetOverride(conditionText) {
+    if (!conditionText) return null;
+    if (CONDITION_SELF_KEYWORDS.test(conditionText)) {
+        return '自身';
     }
     return null;
 }
@@ -917,7 +912,6 @@ function parseBuffText(text) {
     const cleanedText = text.replace(/\r?\n/g, ' ');
     const expandedStatsText = expandSharedStatBuffs(cleanedText);
     const sourceText = expandSharedStatDebuffs(expandedStatsText);
-    const hasSelfOnlyNote = SELF_ONLY_NOTE_REGEX.test(sourceText);
     const results = [];
     const seen = new Set();
     const sentenceBoundaryChars = ['。', '！', '？'];
@@ -994,7 +988,7 @@ function parseBuffText(text) {
             const targetInfo = detectBuffTarget(matchText, beforeContext, afterContext, sourceText);
             const target = targetInfo.label;
             const rawCondition = extractBuffCondition(beforeContext, afterContext);
-            const targetOverride = detectTargetOverride(rawCondition, beforeContext, afterContext);
+            const targetOverride = detectTargetOverride(rawCondition);
             let condition = cleanupCondition(rawCondition, buffPattern.type);
             if (condition && /最大化/.test(condition) && buffPattern.type !== '与えるダメージ') {
                 condition = condition.replace(/最大化[^。、（）]*/g, '').trim();
@@ -1119,18 +1113,14 @@ function parseBuffText(text) {
                     result.targetParts = normalizedTarget.split('/').filter(Boolean);
                 }
             }
-            if (hasSelfOnlyNote && SELF_ONLY_TARGET_TYPES.has(result.type)) {
-                const baseTarget = Array.isArray(result.targetParts) && result.targetParts.length
-                    ? result.targetParts[0]
-                    : result.target;
-                if (baseTarget === '射程内' && !ENEMY_KEYWORD_REGEX.test(matchText)) {
-                    const normalizedTarget = formatTargetParts('自身', Array.isArray(result.targetParts) ? result.targetParts.slice(1) : []);
-                    result.target = normalizedTarget;
-                    result.targetParts = normalizedTarget.split('/').filter(Boolean);
-                }
+            const selfOnlyHint = SELF_ONLY_NOTE_REGEX.test(`${matchText}${afterContext}`);
+            if (selfOnlyHint && SELF_ONLY_TARGET_TYPES.has(result.type) && !ENEMY_KEYWORD_REGEX.test(matchText)) {
+                const normalizedTarget = formatTargetParts('自身', Array.isArray(result.targetParts) ? result.targetParts.slice(1) : []);
+                result.target = normalizedTarget;
+                result.targetParts = normalizedTarget.split('/').filter(Boolean);
             }
-            // 明示的に「対象」や「敵」が出てくる場合は射程内扱い（ただし自分のみ注記がなければ）
-            if (result.target === '自身' && /対象|敵/.test(sentenceText) && (!hasSelfOnlyNote || ENEMY_KEYWORD_REGEX.test(matchText))) {
+            // 明示的に「対象」や「敵」が出てくる場合は射程内扱い
+            if (result.target === '自身' && /対象|敵/.test(sentenceText)) {
                 const enemyTargetText = sentenceText.replace(/\s+/g, '');
                 if (/射程/.test(enemyTargetText) || /対象の/.test(enemyTargetText)) {
                     const normalizedTarget = formatTargetParts('射程内', []);
