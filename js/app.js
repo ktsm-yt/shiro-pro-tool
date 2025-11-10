@@ -201,12 +201,10 @@ const GIANT_MULTIPLIER_TYPES = new Set([
 const GIANT_SENTENCE_SHARED_TYPES = new Set([
     '攻撃割合',
     '攻撃固定',
-    '射程割合',
     '射程固定',
     '回復',
     '回復割合',
     '与ダメ回復',
-    '移動低下',
     '移動上昇',
     '移動変更',
     '移動後退'
