@@ -1295,6 +1295,23 @@ function formatBuffValue(value) {
 
 const SPECIAL_TARGET_KEYWORDS = ['味方', '伏兵', '殿', '水', '平', '山', '平山', '地獄'];
 
+function normalizeUnitAndValue(unit, value) {
+    if (typeof value !== 'number') {
+        return { unit, value };
+    }
+    const isPercentUnit = unit === '+%' || unit === '-%';
+    const isFlatUnit = unit === '+' || unit === '-';
+    if (isPercentUnit || isFlatUnit) {
+        if (value < 0) {
+            const normalizedUnit = isPercentUnit ? '-%' : '-';
+            return { unit: normalizedUnit, value: Math.abs(value) };
+        }
+        const normalizedUnit = isPercentUnit ? '+%' : '+';
+        return { unit: normalizedUnit, value };
+    }
+    return { unit, value };
+}
+
 function isSpecialTarget(targetText) {
     if (!targetText) return false;
     return SPECIAL_TARGET_KEYWORDS.some(keyword => targetText === keyword || targetText.includes(keyword));
@@ -1347,8 +1364,17 @@ function buildBuffString(buff) {
     buff.targetParts = normalizedTarget.split('/').filter(Boolean);
 
     const type = buff.type;
-    const unit = buff.unit || '';
-    const valueText = formatBuffValue(buff.value);
+    let unit = buff.unit || '';
+    let value = buff.value;
+    const normalized = normalizeUnitAndValue(unit, typeof value === 'number' ? value : Number(value));
+    unit = normalized.unit || unit;
+    if (typeof normalized.value === 'number' && Number.isFinite(normalized.value)) {
+        value = normalized.value;
+    } else {
+        value = buff.value;
+    }
+    buff.value = value;
+    const valueText = formatBuffValue(value);
 
     let core = type;
     if (unit && valueText) {
