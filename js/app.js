@@ -35,7 +35,7 @@ const buffPatterns = [
     // 防御バフ（巨大化対応：×5倍して登録）
     { pattern: /巨大化する度に.*?防御(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "防御割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) * 5 },
     { pattern: /巨大化する度に.*?防御(?:力)?[がを]?([+＋-－]?\d+)(?:上昇|アップ|UP|増加)/i, type: "防御固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) * 5 },
-    { pattern: /防御(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "防御割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
+    { pattern: /防御(?:力)?[がを]?(?:[^％%]*?)([+＋-－]?\d+(?:\.\d+)?)[％%](?:上昇|アップ|UP|増加)/i, type: "防御割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
     { pattern: /防御(?:力)?[がを]?([+＋-－]?\d+)(?:上昇|アップ|UP|増加)/i, type: "防御固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) },
     { pattern: /防御(?:力)?が(\d+(?:\.\d+)?)倍/i, type: "防御割合", unit: "×", getValue: (m) => parseFloat(m[1]) },
     { pattern: /防御[をが]?無視/i, type: "防御無視", unit: "", getValue: () => null },
@@ -46,7 +46,7 @@ const buffPatterns = [
     { pattern: /回復[がを]?(\d+(?:\.\d+)?)倍/i, type: "回復割合", unit: "×", getValue: (m) => parseFloat(m[1]) },
 
     // 防御デバフ
-    { pattern: /(?:敵の)?防御(?:力)?[がを]?([+＋-－]?\d+(?:\.\d+)?)[％%](?:低下|減少|ダウン|DOWN)/i, type: "防御デバフ割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
+    { pattern: /(?:敵の)?防御(?:力)?[がを]?(?:[^％%]*?)([+＋-－]?\d+(?:\.\d+)?)[％%](?:低下|減少|ダウン|DOWN)/i, type: "防御デバフ割合", unit: "+%", getValue: (m) => parseFloat(m[1].replace('＋', '+').replace('－', '-')) },
     { pattern: /(?:敵の)?防御(?:力)?[がを]?([+＋-－]?\d+)(?:低下|減少|ダウン|DOWN)/i, type: "防御デバフ固定", unit: "+", getValue: (m) => parseInt(m[1].replace('＋', '+').replace('－', '-')) },
 
     // 攻撃デバフ
