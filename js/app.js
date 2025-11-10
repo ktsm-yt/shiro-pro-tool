@@ -1100,6 +1100,15 @@ function parseBuffText(text) {
                     result.targetParts = normalizedTarget.split('/').filter(Boolean);
                 }
             }
+            // 明示的に「対象」や「敵」が出てくる場合は射程内扱い
+            if (result.target === '自身' && /対象|敵/.test(sentenceText)) {
+                const enemyTargetText = sentenceText.replace(/\s+/g, '');
+                if (/射程/.test(enemyTargetText) || /対象の/.test(enemyTargetText)) {
+                    const normalizedTarget = formatTargetParts('射程内', []);
+                    result.target = normalizedTarget;
+                    result.targetParts = normalizedTarget.split('/').filter(Boolean);
+                }
+            }
             const derivedResults = [];
             if (result.type === '与ダメ') {
                 const combinedText = `${matchText} ${context}`;
