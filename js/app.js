@@ -125,7 +125,7 @@ const TARGET_MODIFIER_ORDER = ['味方', '伏兵', '殿', '水', '平', '山', '
 const TARGET_MODIFIER_OPTIONS = new Set(['味方', '伏兵', '殿', ...ATTRIBUTE_MODIFIERS]);
 const CONDITION_SELF_KEYWORDS = /(自分|自身)のみ(?:が)?対象?|対象(?:は|が)?(自分|自身)のみ/;
 
-const ALL_ENEMY_REGEX = /(?:全て|すべて)の敵|敵全体|全敵/g;
+const ALL_ENEMY_REGEX = /(?:全て|すべて)の敵|敵全体|全敵/;
 
 const TARGET_KEYWORD_RULES = [
     { pattern: /自身/i, base: '自身', modifiers: [] },
@@ -999,7 +999,8 @@ function parseBuffText(text) {
 
             const targetInfo = detectBuffTarget(matchText, beforeContext, afterContext, sourceText);
             let targetLabel = targetInfo.label;
-            if (ALL_ENEMY_REGEX.test(matchText)) {
+            const enemyContextText = `${matchText}${beforeContext}${afterContext}`;
+            if (ALL_ENEMY_REGEX.test(enemyContextText)) {
                 const parsedTarget = translateLegacyTarget(targetLabel);
                 targetLabel = formatTargetParts('全', parsedTarget.modifiers);
                 targetInfo.parts = targetLabel.split('/').filter(Boolean);
