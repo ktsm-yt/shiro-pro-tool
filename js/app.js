@@ -277,10 +277,10 @@ function detectTargetInfo(segment, beforeContext, afterContext, fullText) {
     const normalizedAfter = normalize(afterContext);
     const normalizedFull = normalize(fullText);
     const contexts = [
+        { text: normalizedSegment, weight: 4 },
         { text: normalizedSegment + normalizedBefore, weight: 3 },
-        { text: normalizedSegment, weight: 2 },
-        { text: normalizedBefore, weight: 2 },
-        { text: normalizedSegment + normalizedAfter, weight: 1 },
+        { text: normalizedSegment + normalizedAfter, weight: 2 },
+        { text: normalizedBefore, weight: 1.5 },
         { text: normalizedAfter, weight: 1 }
     ];
     const modifiers = new Set();
