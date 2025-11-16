@@ -14,7 +14,8 @@
             <button class="tab active" data-tab="characters">キャラクター管理</button>
             <button class="tab" data-tab="formation">編成作成</button>
             <button class="tab" data-tab="comparison">編成比較</button>
-            <button class="tab" data-tab="damage">ダメージ計算</button>
+            <button class="tab" data-tab="simpleDamage">ダメージ計算</button>
+            <button class="tab" data-tab="damage">ダメージ計算(β)</button>
         </div>
 
         <div id="characters" class="tab-content active">
@@ -120,6 +121,7 @@
                             <!-- 防御 -->
                             <button type="button" class="select-button" data-group="formationType" data-value="防御固定">防御固定</button>
                             <button type="button" class="select-button" data-group="formationType" data-value="防御割合">防御割合</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="回復">回復</button>
                             <!-- 速度 -->
                             <button type="button" class="select-button" data-group="formationType" data-value="速度">速度</button>
                             <button type="button" class="select-button" data-group="formationType" data-value="隙">隙</button>
@@ -198,6 +200,7 @@
                             <!-- 防御 -->
                             <button type="button" class="select-button" data-group="skillType" data-value="防御固定">防御固定</button>
                             <button type="button" class="select-button" data-group="skillType" data-value="防御割合">防御割合</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="回復">回復</button>
                             <button type="button" class="select-button" data-group="skillType" data-value="攻撃デバフ固定">攻撃デバフ固定</button>
                             <button type="button" class="select-button" data-group="skillType" data-value="攻撃デバフ割合">攻撃デバフ割合</button>
                             <!-- 速度 -->
@@ -240,11 +243,28 @@
                 <div class="form-group">
                     <label>計略</label>
                     <div class="buff-input-area">
-                        <div class="button-group">
+                        <div class="target-selector">
                             <label>対象</label>
-                            <button type="button" class="select-button" data-group="strategyTarget" data-value="自身">自身</button>
-                            <button type="button" class="select-button" data-group="strategyTarget" data-value="味方射程内">味方射程内</button>
-                            <button type="button" class="select-button" data-group="strategyTarget" data-value="伏兵射程内">伏兵射程内</button>
+                            <div class="button-group target-base-group">
+                                <button type="button" class="select-button" data-group="strategyTargetBase" data-value="自身">自身</button>
+                                <button type="button" class="select-button" data-group="strategyTargetBase" data-value="射程内">射程内</button>
+                                <button type="button" class="select-button" data-group="strategyTargetBase" data-value="全">全</button>
+                            </div>
+                            <div class="button-group target-modifier-group">
+                                <label>追加条件（複数選択可）</label>
+                                <button type="button" class="select-button multi-select" data-group="strategyTargetModifier" data-value="味方">味方</button>
+                                <button type="button" class="select-button multi-select" data-group="strategyTargetModifier" data-value="伏兵">伏兵</button>
+                                <button type="button" class="select-button multi-select" data-group="strategyTargetModifier" data-value="殿">殿</button>
+                                <button type="button" class="select-button multi-select" data-group="strategyTargetModifier" data-value="水">水</button>
+                                <button type="button" class="select-button multi-select" data-group="strategyTargetModifier" data-value="平">平</button>
+                                <button type="button" class="select-button multi-select" data-group="strategyTargetModifier" data-value="山">山</button>
+                                <button type="button" class="select-button multi-select" data-group="strategyTargetModifier" data-value="平山">平山</button>
+                                <button type="button" class="select-button multi-select" data-group="strategyTargetModifier" data-value="地獄">地獄</button>
+                            </div>
+                            <div class="custom-target-input">
+                                <input type="text" id="strategyTargetCustom" placeholder="カスタム条件（例：伏兵の射程内、歌舞のみ）">
+                            </div>
+                            <p class="target-hint">※ 「味方・伏兵・殿・属性」が含まれる対象は編成画面で強調表示されます</p>
                         </div>
                         <div class="button-group">
                             <label>バフ種</label>
@@ -268,6 +288,7 @@
                             <!-- 防御 -->
                             <button type="button" class="select-button" data-group="strategyType" data-value="防御固定">防御固定</button>
                             <button type="button" class="select-button" data-group="strategyType" data-value="防御割合">防御割合</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="回復">回復</button>
                             <button type="button" class="select-button" data-group="strategyType" data-value="攻撃デバフ固定">攻撃デバフ固定</button>
                             <button type="button" class="select-button" data-group="strategyType" data-value="攻撃デバフ割合">攻撃デバフ割合</button>
                             <!-- 速度 -->
@@ -413,19 +434,34 @@
             </div>
         </div>
 
+        <div id="simpleDamage" class="tab-content">
+            <div class="simple-damage-header">
+                <div>
+                    <h2>簡易ダメージ計算</h2>
+                    <p style="color: #666; margin-bottom: 0;">行を組み合わせてシンプルにダメージを見積もることができます。複数の計算セットを並べて比較できます。</p>
+                </div>
+                <div class="simple-damage-global-actions">
+                    <button type="button" class="btn simple-damage-toggle-all" onclick="expandAllSimpleDamageEditors()">全て開く</button>
+                    <button type="button" class="btn simple-damage-toggle-all" onclick="collapseAllSimpleDamageEditors()">全て閉じる</button>
+                </div>
+            </div>
+
+            <div id="simpleDamageProfiles" class="simple-damage-profiles" ondragover="handleProfileDragOver(event)" ondrop="handleProfileDrop(event)"></div>
+
+            <div class="simple-damage-editors" id="simpleDamageEditorsContainer"></div>
+        </div>
+
         <div id="damage" class="tab-content">
-            <h2>ダメージ計算</h2>
+            <h2>ダメージ計算(β)</h2>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                 <!-- 左側: キャラクター選択 -->
                 <div>
                     <h3>キャラクター選択</h3>
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 10px; font-weight: bold;">編成から選択</label>
-                        <select id="damageFormationSelect" onchange="loadFormationForDamage()" style="width: 100%; padding: 8px; margin-bottom: 10px;">
-                            <option value="">-- 編成を選択 --</option>
-                        </select>
-                        <div id="damageFormationCharacters" style="display: grid; gap: 8px;"></div>
+                        <label style="display: block; margin-bottom: 10px; font-weight: bold;">キャラクター検索</label>
+                        <input type="text" id="damageCharacterSearch" placeholder="名前や武器種で検索" oninput="updateDamageCharacterSearch(this.value)" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+                        <div id="damageCharacterList" style="display: grid; gap: 8px; max-height: 320px; overflow-y: auto;"></div>
                     </div>
 
                     <div id="selectedCharacterForDamage" style="background: #e8f4f8; padding: 15px; border-radius: 10px;">
@@ -449,10 +485,22 @@
                         </div>
 
                         <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">城娘の耐久 (%)</label>
+                            <input type="range" id="allyHP" min="0" max="100" value="100" oninput="updateAllyHPDisplay(); calculateDamage();" style="width: 100%;">
+                            <div style="text-align: center; margin-top: 5px; font-size: 18px; font-weight: bold;" id="allyHPDisplay">100%</div>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
                             <label style="display: flex; align-items: center; gap: 8px;">
                                 <input type="checkbox" id="strategyActive" onchange="calculateDamage()">
                                 <span style="font-weight: bold;">計略発動中</span>
                             </label>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">ヒット数 / 対象数</label>
+                            <input type="number" id="hitCount" value="1" min="1" step="1" oninput="calculateDamage()" style="width: 100%; padding: 8px;">
+                            <p style="font-size: 12px; color: #666; margin-top: 5px;">多段攻撃や同時攻撃数を反映したい場合に調整</p>
                         </div>
 
                         <div style="margin-bottom: 15px;">
@@ -462,6 +510,12 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div id="damageConditionControls" style="background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px dashed #ddd;">
+                <h3 style="margin-top: 0;">条件付きバフ</h3>
+                <p style="color: #666; font-size: 14px;">条件判定が自動で行えないバフはここに表示され、手動でON/OFFできます。</p>
+                <div id="damageConditionList" style="display: grid; gap: 10px;"></div>
             </div>
 
             <!-- 計算結果 -->

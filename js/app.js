@@ -1605,6 +1605,33 @@ let characters = [];
 let currentFormation = [];
 let savedFormations = [];
 let selectedFormationsForComparison = [];
+let selectedDamageCharacterId = null;
+let damageConditionToggles = {};
+let damageCharacterSearchTerm = '';
+let simpleDamageProfiles = [];
+let simpleDamageActiveProfileId = null;
+let simpleDamageEditorCollapsedState = {};
+let simpleRowDragState = { profileId: null, rowId: null };
+let simpleProfileDragState = { profileId: null };
+const SIMPLE_DAMAGE_SPECIAL_MULTIPLIER_REGEX = {
+    give: /与えるダメージ|直撃ボーナス/,
+    yo: /与ダメ/,
+    hi: /被ダメ/,
+    count: /攻撃回数/
+};
+
+const SIMPLE_ROW_PRESETS = [
+    { key: 'base', label: '基礎攻撃力（図鑑）', type: 'base', value: 0 },
+    { key: 'fixed', label: '攻撃 固定値', type: 'add', value: 0 },
+    { key: 'ratio', label: '割合バフ', type: 'multiply', value: 1, stage: 'pre' },
+    { key: 'give', label: '与えるダメージ', type: 'multiply', value: 1, stage: 'post' },
+    { key: 'direct', label: '直撃ボーナス', type: 'multiply', value: 1, stage: 'post' },
+    { key: 'yo', label: '与ダメージ', type: 'multiply', value: 1, stage: 'post' },
+    { key: 'hi', label: '被ダメージ', type: 'multiply', value: 1, stage: 'post' },
+    { key: 'count', label: '攻撃回数', type: 'multiply', value: 1, stage: 'post' },
+    { key: 'inspire', label: '鼓舞（加算）', type: 'inspire', value: 0, stage: 'pre' },
+    { key: 'ratioDup', label: '効果重複', type: 'multiply', value: 1, stage: 'post' }
+];
 
 // バフ入力用の一時データ
 let tempSkills = [];
@@ -2369,6 +2396,11 @@ function renderCharacters() {
         `;
         grid.appendChild(card);
     });
+
+    // ダメージ計算タブに反映
+    renderDamageCharacterList();
+    renderSelectedDamageCharacter();
+    calculateDamage();
 }
 
 // 編成管理
@@ -3461,32 +3493,1503 @@ function renderComparisonChart() {
     });
 }
 
-// タブ切り替え
+// 簡易ダメージ計算
+const SIMPLE_DAMAGE_STORAGE_KEY = 'simpleDamageProfiles';
+const ACTIVE_TAB_STORAGE_KEY = 'activeTabName';
+let simpleDamageRowIdCounter = 0;
+function generateSimpleProfileId() {
+    return Math.floor(Date.now() + Math.random() * 1000);
+}
+
+function initializeSimpleDamageModule() {
+    loadSimpleDamageData();
+    if (simpleDamageProfiles.length === 0) {
+        const profile = createDefaultSimpleDamageProfile();
+        simpleDamageProfiles.push(profile);
+        simpleDamageActiveProfileId = profile.id;
+        saveSimpleDamageData();
+    }
+    if (!simpleDamageActiveProfileId && simpleDamageProfiles.length > 0) {
+        simpleDamageActiveProfileId = simpleDamageProfiles[0].id;
+    }
+    renderSimpleDamageTab();
+}
+
+function loadSimpleDamageData() {
+    try {
+        const storedProfiles = localStorage.getItem(SIMPLE_DAMAGE_STORAGE_KEY);
+        if (storedProfiles) {
+            simpleDamageProfiles = JSON.parse(storedProfiles);
+        }
+    } catch (err) {
+        console.error('Failed to load simple damage data', err);
+        simpleDamageProfiles = [];
+    }
+
+    normalizeSimpleDamageData();
+}
+
+function saveSimpleDamageData() {
+    localStorage.setItem(SIMPLE_DAMAGE_STORAGE_KEY, JSON.stringify(simpleDamageProfiles));
+}
+
+function normalizeSimpleDamageData() {
+    simpleDamageProfiles = (simpleDamageProfiles || []).map(profile => {
+        const normalizedRows = (profile.rows || []).map(row => {
+            const normalizedType = ['base', 'add', 'inspire', 'multiply'].includes(row.type)
+                ? row.type
+                : (row.type === '鼓舞' ? 'inspire' : (row.type === '攻撃固定' ? 'add' : 'multiply'));
+            return {
+                id: row.id || generateSimpleDamageRowId(),
+                label: row.label || '項目',
+                type: normalizedType,
+                value: Number(row.value) || 0,
+                stage: normalizedType === 'multiply' && row.stage === 'post' ? 'post' : 'pre',
+                disabled: !!row.disabled,
+                presetKey: typeof row.presetKey === 'string' ? row.presetKey : '',
+                condition: typeof row.condition === 'string' ? row.condition : '',
+                applyInspireToSelf: normalizedType === 'inspire'
+                    ? (typeof row.applyInspireToSelf === 'boolean' ? row.applyInspireToSelf : false)
+                    : undefined
+            };
+        });
+        return {
+            id: profile.id ? Math.floor(profile.id) : generateSimpleProfileId(),
+            name: profile.name || 'キャラ',
+            rows: normalizedRows,
+            enemyDefense: Number(profile.enemyDefense) || 0
+        };
+    });
+}
+
+function createDefaultSimpleDamageProfile() {
+    const now = Date.now();
+    return {
+        id: now,
+        name: 'キャラA',
+        enemyDefense: 0,
+        rows: [
+            { id: now + 1, label: '基礎攻撃力（図鑑）', type: 'base', value: 1000, stage: 'pre', disabled: false, presetKey: 'base', condition: '' },
+            { id: now + 2, label: '特技 固定値', type: 'add', value: 0, stage: 'pre', disabled: false, presetKey: 'fixed', condition: '' },
+            { id: now + 3, label: '割合バフ', type: 'multiply', value: 1, stage: 'pre', disabled: false, presetKey: 'ratio', condition: '' },
+            { id: now + 4, label: '特技 与えるダメージ', type: 'multiply', value: 1, stage: 'post', disabled: false, presetKey: 'give', condition: '' },
+            { id: now + 5, label: '計略 与えるダメージ', type: 'multiply', value: 1, stage: 'post', disabled: false, presetKey: 'give', condition: '' },
+            { id: now + 6, label: '与ダメージ', type: 'multiply', value: 1, stage: 'post', disabled: false, presetKey: 'yo', condition: '' },
+            { id: now + 7, label: '被ダメージ', type: 'multiply', value: 1, stage: 'post', disabled: false, presetKey: 'hi', condition: '' },
+            { id: now + 8, label: '鼓舞（加算）', type: 'inspire', value: 0, stage: 'pre', disabled: false, applyInspireToSelf: false, presetKey: 'inspire', condition: '' },
+            { id: now + 9, label: '効果重複', type: 'multiply', value: 1, stage: 'post', disabled: false, presetKey: 'ratioDup', condition: '' },
+            { id: now + 10, label: '攻撃回数', type: 'multiply', value: 1, stage: 'post', disabled: false, presetKey: 'count', condition: '' }
+        ]
+    };
+}
+
+function generateSimpleDamageRowId() {
+    simpleDamageRowIdCounter += 1;
+    return Date.now() + simpleDamageRowIdCounter;
+}
+
+function getActiveSimpleDamageProfile() {
+    return simpleDamageProfiles.find(profile => profile.id === simpleDamageActiveProfileId) || null;
+}
+
+function addSimpleDamageProfile() {
+    const suffix = simpleDamageProfiles.length + 1;
+    const newProfile = createDefaultSimpleDamageProfile();
+    newProfile.id = generateSimpleProfileId();
+    newProfile.name = `キャラ${suffix}`;
+    simpleDamageProfiles.push(newProfile);
+    simpleDamageActiveProfileId = newProfile.id;
+    saveSimpleDamageData();
+    renderSimpleDamageTab();
+}
+
+function selectSimpleDamageProfile(profileId, options = {}) {
+    simpleDamageActiveProfileId = profileId;
+    if (profileId != null) {
+        simpleDamageEditorCollapsedState[String(profileId)] = false;
+    }
+    renderSimpleDamageTab(() => {
+        if (options.scroll) {
+            scrollToSimpleDamageEditor(profileId);
+        }
+    });
+}
+
+function renameSimpleDamageProfile(profileId) {
+    const profile = simpleDamageProfiles.find(p => p.id === profileId);
+    if (!profile) return;
+    const name = prompt('プロファイル名を入力してください', profile.name || '');
+    if (name && name.trim()) {
+        profile.name = name.trim();
+        saveSimpleDamageData();
+        renderSimpleDamageTab();
+    }
+}
+
+function deleteSimpleDamageProfile(profileId) {
+    if (!confirm('この計算セットを削除しますか？')) return;
+    simpleDamageProfiles = simpleDamageProfiles.filter(p => p.id !== profileId);
+    delete simpleDamageEditorCollapsedState[String(profileId)];
+    if (simpleDamageProfiles.length === 0) {
+        const profile = createDefaultSimpleDamageProfile();
+        simpleDamageProfiles.push(profile);
+        simpleDamageActiveProfileId = profile.id;
+    } else if (simpleDamageActiveProfileId === profileId) {
+        simpleDamageActiveProfileId = simpleDamageProfiles[0].id;
+    }
+    saveSimpleDamageData();
+    renderSimpleDamageTab();
+}
+
+function copySimpleDamageProfile(profileId) {
+    const source = simpleDamageProfiles.find(p => p.id === profileId);
+    if (!source) return;
+    const cloned = structuredClone(source);
+    cloned.id = generateSimpleProfileId();
+    cloned.name = `${source.name || 'キャラ'} (コピー)`;
+    cloned.rows = (cloned.rows || []).map(row => ({
+        ...row,
+        id: generateSimpleDamageRowId()
+    }));
+    simpleDamageProfiles.push(cloned);
+    simpleDamageActiveProfileId = cloned.id;
+    saveSimpleDamageData();
+    renderSimpleDamageTab();
+}
+
+function renderSimpleDamageTab(afterRenderCallback) {
+    if (!simpleDamageActiveProfileId && simpleDamageProfiles.length > 0) {
+        simpleDamageActiveProfileId = simpleDamageProfiles[0].id;
+    }
+    renderSimpleDamageProfilesSummary();
+    const editorsContainer = document.getElementById('simpleDamageEditorsContainer');
+    if (editorsContainer) {
+        editorsContainer.innerHTML = '';
+        if (simpleDamageProfiles.length === 0) {
+            const emptyState = document.createElement('p');
+            emptyState.style.color = '#666';
+            emptyState.style.textAlign = 'center';
+            emptyState.style.margin = '30px 0';
+            emptyState.textContent = '計算セットを左上の「＋ セット追加」から作成してください。';
+            editorsContainer.appendChild(emptyState);
+        } else {
+            simpleDamageProfiles.forEach(profile => {
+                const editorWrapper = document.createElement('div');
+                editorWrapper.className = 'simple-damage-editor';
+                editorWrapper.id = `simpleDamageEditor-${profile.id}`;
+                if (profile.id === simpleDamageActiveProfileId) {
+                    editorWrapper.classList.add('active');
+                }
+                editorsContainer.appendChild(editorWrapper);
+                renderSimpleDamageEditor(profile.id, editorWrapper);
+            });
+        }
+    }
+
+    if (typeof afterRenderCallback === 'function') {
+        afterRenderCallback();
+    }
+}
+
+function isSimpleDamageEditorCollapsed(profileId) {
+    if (!profileId) return false;
+    const key = String(profileId);
+    return !!simpleDamageEditorCollapsedState[key];
+}
+
+function toggleSimpleDamageEditor(profileId) {
+    if (!profileId) return;
+    const key = String(profileId);
+    simpleDamageEditorCollapsedState[key] = !simpleDamageEditorCollapsedState[key];
+    renderSimpleDamageTab(() => {
+        if (!simpleDamageEditorCollapsedState[key]) {
+            scrollToSimpleDamageEditor(profileId);
+        }
+    });
+}
+
+function setAllSimpleDamageEditorsCollapsed(collapsed) {
+    const target = !!collapsed;
+    simpleDamageProfiles.forEach(profile => {
+        if (!profile) return;
+        simpleDamageEditorCollapsedState[String(profile.id)] = target;
+    });
+}
+
+function expandAllSimpleDamageEditors() {
+    setAllSimpleDamageEditorsCollapsed(false);
+    renderSimpleDamageTab();
+}
+
+function collapseAllSimpleDamageEditors() {
+    setAllSimpleDamageEditorsCollapsed(true);
+    renderSimpleDamageTab();
+}
+
+function applyNumericInputMode(rootElement) {
+    const target = rootElement && typeof rootElement.querySelectorAll === 'function'
+        ? rootElement
+        : document;
+    target.querySelectorAll('input[type="number"]').forEach(input => {
+        input.setAttribute('inputmode', 'decimal');
+    });
+}
+
+function renderSimpleDamageProfilesSummary() {
+    const container = document.getElementById('simpleDamageProfiles');
+    if (!container) return;
+
+    if (simpleDamageProfiles.length === 0) {
+        container.innerHTML = `
+            <div style="flex: 1;">
+                <p style="color: #666;">計算セットがありません。「セット追加」ボタンから作成してください。</p>
+            </div>
+            <div class="simple-damage-card" style="display:flex; align-items:center; justify-content:center;">
+                <button class="btn" style="width:100%;" onclick="addSimpleDamageProfile()">＋ セット追加</button>
+            </div>
+        `;
+        return;
+    }
+
+    const cards = simpleDamageProfiles.map(profile => {
+        const result = calculateSimpleDamage(profile);
+        const formatted = formatNumber(Math.round(result.total || 0));
+        const active = profile.id === simpleDamageActiveProfileId ? 'active' : '';
+        return `
+            <div class="simple-damage-card ${active}" draggable="true" ondragstart="startProfileDrag(event, ${profile.id})" ondragend="endProfileDrag(event)">
+                <h3>${profile.name}</h3>
+                <div class="result-value" id="simpleDamageCardResult-${profile.id}">${formatted}</div>
+                <div class="simple-damage-card-actions">
+                    <button class="btn" onclick="selectSimpleDamageProfile(${profile.id}, { scroll: true })">編集</button>
+                    <button class="btn" onclick="renameSimpleDamageProfile(${profile.id})">名称変更</button>
+                    <button class="btn" onclick="copySimpleDamageProfile(${profile.id})">複製</button>
+                    <button class="btn delete-btn" onclick="deleteSimpleDamageProfile(${profile.id})">削除</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = cards + `
+        <div class="simple-damage-card" style="display: flex; align-items: center; justify-content: center;">
+            <button class="btn" style="width: 100%;" onclick="addSimpleDamageProfile()">＋ セット追加</button>
+        </div>
+    `;
+}
+
+function renderSimpleDamageEditor(profileId = null, containerOverride = null) {
+    const container = containerOverride || document.getElementById('simpleDamageEditor');
+    if (!container) return;
+    const profile = profileId ? simpleDamageProfiles.find(p => p.id === profileId) : getActiveSimpleDamageProfile();
+
+    if (!profile) {
+        container.innerHTML = '<p style="color: #666;">左のカードから編集するセットを選択してください。</p>';
+        return;
+    }
+
+    const collapsed = isSimpleDamageEditorCollapsed(profile.id);
+    const result = calculateSimpleDamage(profile);
+    let rowsHtml = '';
+    if (!collapsed) {
+        rowsHtml = (profile.rows || []).map((row) => {
+            const disabledClass = row.disabled ? 'simple-damage-row disabled' : 'simple-damage-row';
+            const typeSelect = `
+                <select class="simple-damage-inline-select" onchange="updateSimpleRowField(${profile.id}, ${row.id}, 'type', this.value)">
+                    <option value="base" ${row.type === 'base' ? 'selected' : ''}>基礎値</option>
+                    <option value="multiply" ${row.type === 'multiply' ? 'selected' : ''}>乗算</option>
+                    <option value="add" ${row.type === 'add' ? 'selected' : ''}>攻撃固定値</option>
+                    <option value="inspire" ${row.type === 'inspire' ? 'selected' : ''}>鼓舞</option>
+                </select>`;
+            const stageSelect = row.type === 'multiply' && shouldShowStageSelect(row)
+                ? `<select class="simple-damage-inline-select" onchange="updateSimpleRowField(${profile.id}, ${row.id}, 'stage', this.value)">
+                        <option value="pre" ${row.stage !== 'post' ? 'selected' : ''}>通常</option>
+                        <option value="post" ${row.stage === 'post' ? 'selected' : ''}>割合重複</option>
+                   </select>`
+                : '';
+            const valueStep = row.type === 'multiply' ? '0.01' : '1';
+            const valueInput = `<input type="number" step="${valueStep}" class="simple-damage-inline-input" value="${row.value}" onchange="updateSimpleRowField(${profile.id}, ${row.id}, 'value', this.value)">`;
+            const presetSelect = `<select class="simple-damage-inline-select" onchange="applySimpleRowPreset(${profile.id}, ${row.id}, this.value)">
+                    <option value="">カスタム</option>
+                    ${SIMPLE_ROW_PRESETS.map(preset => `<option value="${preset.key}" ${row.presetKey === preset.key ? 'selected' : ''}>${preset.label}</option>`).join('')}
+                </select>`;
+            const inspireToggle = row.type === 'inspire'
+                ? `<label class="simple-inline-checkbox">
+                        <input type="checkbox" ${row.applyInspireToSelf ? 'checked' : ''} onchange="updateSimpleRowField(${profile.id}, ${row.id}, 'applyInspireToSelf', this.checked)">
+                        自身に適用
+                   </label>`
+                : '';
+            const labelInput = row.presetKey
+                ? ''
+                : `<input type="text" class="simple-damage-inline-input simple-row-label-input" data-profile-id="${profile.id}" data-row-id="${row.id}" data-field="label" value="${escapeHtml(row.label || '')}" oninput="updateSimpleRowField(${profile.id}, ${row.id}, 'label', this.value)">`;
+            const conditionInput = `<input type="text" class="simple-damage-inline-input simple-row-condition-input" placeholder="条件/メモ (例: HP50%以下)" value="${escapeHtml(row.condition || '')}" oninput="updateSimpleRowField(${profile.id}, ${row.id}, 'condition', this.value)">`;
+            return `
+                <tr class="${disabledClass}" ondragover="handleSimpleRowDragOver(event)" ondrop="handleSimpleRowDrop(event, ${profile.id}, ${row.id})">
+                    <td>
+                        ${presetSelect}
+                        ${labelInput}
+                        ${conditionInput}
+                        <div class="simple-damage-inline-meta">
+                            ${typeSelect}
+                            ${stageSelect}
+                            ${inspireToggle}
+                        </div>
+                    </td>
+                    <td>${valueInput}</td>
+                    <td>
+                        <div class="simple-damage-tools">
+                            <button type="button" class="btn drag-handle" draggable="true" title="ドラッグで並び替え" ondragstart="startSimpleRowDrag(event, ${profile.id}, ${row.id})" ondragend="endSimpleRowDrag(event)">↕</button>
+                            <button type="button" class="btn" title="有効/無効" onclick="toggleSimpleRow(${profile.id}, ${row.id})">${row.disabled ? '✅' : '🚫'}</button>
+                            <button type="button" class="btn delete-btn" title="削除" onclick="deleteSimpleRow(${profile.id}, ${row.id})">🗑</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    const toggleIcon = collapsed ? '▸' : '▾';
+    const toggleAriaLabel = collapsed ? `${profile.name}の計算行を展開` : `${profile.name}の計算行を折りたたみ`;
+    const addRowAriaLabel = `${profile.name}に行を追加`;
+    const resultHtml = buildSimpleDamageResultHTML(profile, result);
+    const bodyHtml = collapsed ? '' : `
+        <div class="simple-damage-editor-body">
+            <table class="simple-damage-table">
+                <thead>
+                    <tr>
+                        <th>項目 / 種別</th>
+                        <th>数値</th>
+                        <th>編集ツール</th>
+                    </tr>
+                </thead>
+                <tbody ondragover="handleSimpleRowDragOver(event)" ondrop="handleSimpleRowDropEnd(event, ${profile.id})">
+                    ${rowsHtml || '<tr><td colspan="3" style="text-align:center; padding:20px; color:#666;">行がありません。「行を追加」から追加してください。</td></tr>'}
+                </tbody>
+            </table>
+            <p style="font-size: 12px; color: #666; margin-top: 5px;">※ 乗算の「通常」は鼓舞を含まない乗算、「割合重複」は鼓舞加算後の値も乗算に含みます。</p>
+        </div>
+    `;
+
+    if (collapsed) {
+        container.classList.add('collapsed');
+    } else {
+        container.classList.remove('collapsed');
+    }
+
+    container.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 10px;">
+            <div>
+                <h3 style="margin: 0;">${profile.name}</h3>
+                <label style="font-size: 12px; color: #555;">敵防御力
+                    <input type="number" id="enemyDefenseInput-${profile.id}" class="simple-damage-inline-input" style="max-width: 120px; margin-left: 8px;" value="${profile.enemyDefense || 0}" oninput="handleEnemyDefenseInput(${profile.id}, event)">
+                </label>
+            </div>
+            <div class="simple-damage-header-actions">
+                <button class="simple-damage-icon-button" type="button" onclick="toggleSimpleDamageEditor(${profile.id})" aria-label="${toggleAriaLabel}" title="${toggleAriaLabel}">${toggleIcon}</button>
+                <button class="simple-damage-icon-button" type="button" onclick="addSimpleRow(${profile.id})" aria-label="${addRowAriaLabel}" title="${addRowAriaLabel}">＋</button>
+            </div>
+        </div>
+        <div id="simpleDamageResult-${profile.id}">
+            ${resultHtml}
+        </div>
+        ${bodyHtml}
+    `;
+
+    applyNumericInputMode(container);
+}
+
+function buildSimpleDamageResultHTML(profile, result) {
+    const totalDisplay = formatNumber(Math.round(result.total || 0));
+    const inspireBonus = Math.round(result.inspireProvided || result.inspire || 0);
+    const inspireInfo = inspireBonus > 0
+        ? `<div class="simple-damage-inspire-info">鼓舞加算: ${formatNumber(inspireBonus)}</div>`
+        : '';
+    return `
+        <div class="simple-damage-result-bar">${totalDisplay} ダメージ</div>
+        ${inspireInfo}
+    `;
+}
+
+function updateSimpleDamageResultView(profile, result) {
+    const container = document.getElementById(`simpleDamageResult-${profile.id}`);
+    if (container) {
+        container.innerHTML = buildSimpleDamageResultHTML(profile, result);
+    }
+}
+
+function updateSimpleDamageSummaryValue(profile, result) {
+    const el = document.getElementById(`simpleDamageCardResult-${profile.id}`);
+    if (el) {
+        el.textContent = formatNumber(Math.round(result.total || 0));
+    }
+}
+
+function addSimpleRow(profileId) {
+    const profile = simpleDamageProfiles.find(p => p.id === profileId);
+    if (!profile) return;
+    const newRow = {
+        id: generateSimpleDamageRowId(),
+        label: '新規項目',
+        type: 'multiply',
+        value: 1,
+        stage: 'pre',
+        disabled: false,
+        condition: ''
+    };
+    profile.rows.push(newRow);
+    saveSimpleDamageData();
+    renderSimpleDamageTab(() => focusSimpleRowLabel(profileId, newRow.id));
+}
+
+function updateSimpleRowField(profileId, rowId, field, value) {
+    const profile = simpleDamageProfiles.find(p => p.id === profileId);
+    if (!profile) return;
+    const row = profile.rows.find(r => r.id === rowId);
+    if (!row) return;
+
+    let shouldRerender = true;
+
+    if (field === 'label') {
+        row.label = value == null ? '' : value;
+        row.presetKey = '';
+        normalizeSimpleRowStage(row);
+        shouldRerender = false;
+    } else if (field === 'type') {
+        row.type = value;
+        if (value !== 'multiply') {
+            row.stage = 'pre';
+        }
+        normalizeSimpleRowStage(row);
+    } else if (field === 'value') {
+        let parsed = parseFloat(value);
+        if (Number.isNaN(parsed)) {
+            parsed = row.type === 'multiply' ? 1 : 0;
+        }
+        row.value = parsed;
+    } else if (field === 'stage') {
+        row.stage = value === 'post' ? 'post' : 'pre';
+    } else if (field === 'applyInspireToSelf') {
+        row.applyInspireToSelf = !!value;
+        shouldRerender = true;
+    } else if (field === 'condition') {
+        row.condition = value || '';
+        shouldRerender = false;
+    }
+
+    saveSimpleDamageData();
+    if (shouldRerender) {
+        renderSimpleDamageTab();
+    }
+}
+
+function applySimpleRowPreset(profileId, rowId, presetKey) {
+    const profile = simpleDamageProfiles.find(p => p.id === profileId);
+    if (!profile) return;
+    const row = profile.rows.find(r => r.id === rowId);
+    if (!row) return;
+    const preset = SIMPLE_ROW_PRESETS.find(p => p.key === presetKey);
+    if (!preset) {
+        row.presetKey = '';
+        renderSimpleDamageTab();
+        return;
+    }
+    row.presetKey = preset.key;
+    row.label = preset.label;
+    row.type = preset.type;
+    row.value = preset.value;
+    row.stage = preset.stage || 'pre';
+    row.condition = '';
+    if (preset.type === 'inspire') {
+        row.applyInspireToSelf = false;
+    }
+    normalizeSimpleRowStage(row);
+    saveSimpleDamageData();
+    renderSimpleDamageTab();
+}
+
+function focusSimpleRowLabel(profileId, rowId) {
+    const selector = `.simple-row-label-input[data-profile-id="${profileId}"][data-row-id="${rowId}"]`;
+    const input = document.querySelector(selector);
+    if (input) {
+        input.focus();
+        input.select();
+    }
+}
+
+function focusEnemyDefenseInput(profileId, caretPos = null) {
+    const input = document.getElementById(`enemyDefenseInput-${profileId}`);
+    if (!input) return;
+    const length = input.value.length;
+    const pos = caretPos === null ? length : Math.max(0, Math.min(caretPos, length));
+    input.focus();
+    input.setSelectionRange(pos, pos);
+}
+
+function updateSimpleProfileDefense(profileId, value, caretPos = null) {
+    const profile = simpleDamageProfiles.find(p => p.id === profileId);
+    if (!profile) return;
+    const parsed = parseFloat(value);
+    profile.enemyDefense = Number.isFinite(parsed) ? parsed : 0;
+    saveSimpleDamageData();
+    const result = calculateSimpleDamage(profile);
+    updateSimpleDamageSummaryValue(profile, result);
+    updateSimpleDamageResultView(profile, result);
+    focusEnemyDefenseInput(profileId, caretPos);
+}
+
+function scrollToSimpleDamageEditor(profileId) {
+    const editor = document.getElementById(`simpleDamageEditor-${profileId}`);
+    if (!editor) return;
+    editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    editor.classList.add('highlight');
+    setTimeout(() => editor.classList.remove('highlight'), 1200);
+}
+
+function isSpecialMultiplierRow(row) {
+    if (!row || row.type !== 'multiply') return false;
+    const label = row.label || '';
+    return Object.values(SIMPLE_DAMAGE_SPECIAL_MULTIPLIER_REGEX).some(regex => regex.test(label));
+}
+
+function shouldShowStageSelect(row) {
+    return row.type === 'multiply' && !isSpecialMultiplierRow(row);
+}
+
+function normalizeSimpleRowStage(row) {
+    if (!row) return;
+    if (row.type !== 'multiply') {
+        row.stage = 'pre';
+        return;
+    }
+    if (isSpecialMultiplierRow(row)) {
+        row.stage = 'post';
+    }
+}
+
+function startSimpleRowDrag(event, profileId, rowId) {
+    event.stopPropagation();
+    simpleRowDragState = { profileId, rowId };
+    if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', String(rowId));
+    }
+    const rowElement = event.target.closest('tr');
+    if (rowElement) {
+        rowElement.classList.add('dragging');
+    }
+}
+
+function endSimpleRowDrag(event) {
+    if (event) {
+        const rowElement = event.target.closest('tr');
+        if (rowElement) {
+            rowElement.classList.remove('dragging');
+        }
+    }
+    clearSimpleRowDragState();
+}
+
+function handleSimpleRowDragOver(event) {
+    if (!simpleRowDragState.rowId) return;
+    event.preventDefault();
+    if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'move';
+    }
+}
+
+function startProfileDrag(event, profileId) {
+    simpleProfileDragState = { profileId };
+    if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', String(profileId));
+    }
+    const card = event.target.closest('.simple-damage-card');
+    if (card) {
+        card.classList.add('dragging');
+    }
+}
+
+function endProfileDrag(event) {
+    const card = event?.target?.closest('.simple-damage-card');
+    if (card) {
+        card.classList.remove('dragging');
+    }
+    simpleProfileDragState = { profileId: null };
+}
+
+function handleProfileDragOver(event) {
+    if (!simpleProfileDragState.profileId) return;
+    event.preventDefault();
+    if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'move';
+    }
+}
+
+function handleProfileDrop(event) {
+    event.preventDefault();
+    const sourceId = simpleProfileDragState.profileId;
+    if (!sourceId) return;
+    const container = document.getElementById('simpleDamageProfiles');
+    if (!container) return;
+
+    let targetCard = event.target.closest('.simple-damage-card');
+    if (!targetCard || !container.contains(targetCard)) {
+        simpleProfileDragState = { profileId: null };
+        renderSimpleDamageTab();
+        return;
+    }
+
+    const profile = simpleDamageProfiles.find(p => p.id === sourceId);
+    if (!profile) {
+        simpleProfileDragState = { profileId: null };
+        return;
+    }
+
+    const sourceIndex = simpleDamageProfiles.findIndex(p => p.id === sourceId);
+    const children = Array.from(container.children).filter(child => child.classList.contains('simple-damage-card'));
+    const targetIndex = children.indexOf(targetCard);
+    if (sourceIndex === -1 || targetIndex === -1) {
+        simpleProfileDragState = { profileId: null };
+        return;
+    }
+
+    const [movedProfile] = simpleDamageProfiles.splice(sourceIndex, 1);
+    simpleDamageProfiles.splice(targetIndex, 0, movedProfile);
+    saveSimpleDamageData();
+    simpleProfileDragState = { profileId: null };
+    renderSimpleDamageTab();
+}
+
+function handleSimpleRowDrop(event, profileId, targetRowId) {
+    event.preventDefault();
+    event.stopPropagation();
+    const source = simpleRowDragState;
+    if (!source.rowId || source.profileId !== profileId || source.rowId === targetRowId) {
+        clearSimpleRowDragState();
+        return;
+    }
+    const profile = simpleDamageProfiles.find(p => p.id === profileId);
+    if (!profile) {
+        clearSimpleRowDragState();
+        return;
+    }
+    const sourceIndex = profile.rows.findIndex(r => r.id === source.rowId);
+    const targetIndex = profile.rows.findIndex(r => r.id === targetRowId);
+    if (sourceIndex === -1 || targetIndex === -1) {
+        clearSimpleRowDragState();
+        return;
+    }
+    const [row] = profile.rows.splice(sourceIndex, 1);
+    const insertIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    profile.rows.splice(Math.max(insertIndex, 0), 0, row);
+    saveSimpleDamageData();
+    renderSimpleDamageTab();
+    clearSimpleRowDragState();
+}
+
+function handleSimpleRowDropEnd(event, profileId) {
+    event.preventDefault();
+    const source = simpleRowDragState;
+    if (!source.rowId || source.profileId !== profileId) {
+        clearSimpleRowDragState();
+        return;
+    }
+    const profile = simpleDamageProfiles.find(p => p.id === profileId);
+    if (!profile) {
+        clearSimpleRowDragState();
+        return;
+    }
+    const sourceIndex = profile.rows.findIndex(r => r.id === source.rowId);
+    if (sourceIndex === -1) {
+        clearSimpleRowDragState();
+        return;
+    }
+    const [row] = profile.rows.splice(sourceIndex, 1);
+    profile.rows.push(row);
+    saveSimpleDamageData();
+    renderSimpleDamageTab();
+    clearSimpleRowDragState();
+}
+
+function clearSimpleRowDragState() {
+    document.querySelectorAll('.simple-damage-row.dragging').forEach(el => el.classList.remove('dragging'));
+    simpleRowDragState = { profileId: null, rowId: null };
+}
+
+function handleEnemyDefenseInput(profileId, event) {
+    const caretPos = event?.target?.selectionStart ?? null;
+    updateSimpleProfileDefense(profileId, event.target.value, caretPos);
+}
+
+function calculateSimpleDamage(profile) {
+    if (!profile) {
+        return { total: 0, base: 0, add: 0, inspire: 0, inspireProvided: 0 };
+    }
+    const rows = profile.rows || [];
+    let baseValue = 0;
+    let attackAddTotal = 0;
+    const receivedInspireRatios = [];
+    const providedInspireRatios = [];
+    const attackRatioMultipliers = [];
+    const ratioMultipliers = [];
+    const giveDamageMultipliers = [];
+    const yoDamageMultipliers = [];
+    const hiDamageMultipliers = [];
+    const attackCountMultipliers = [];
+
+    const multiplyValues = (list) => list.reduce((acc, val) => acc * val, 1);
+
+    rows.forEach(row => {
+        if (row.disabled) return;
+        const value = Number(row.value);
+        if (!Number.isFinite(value)) return;
+        switch (row.type) {
+            case 'base':
+                baseValue = value;
+                break;
+            case 'add':
+                attackAddTotal += value;
+                break;
+            case 'inspire':
+                if (row.applyInspireToSelf) {
+                    receivedInspireRatios.push(value);
+                } else {
+                    providedInspireRatios.push(value);
+                }
+                break;
+            case 'multiply': {
+                const label = row.label || '';
+                if (SIMPLE_DAMAGE_SPECIAL_MULTIPLIER_REGEX.give.test(label)) {
+                    giveDamageMultipliers.push(value);
+                } else if (SIMPLE_DAMAGE_SPECIAL_MULTIPLIER_REGEX.yo.test(label)) {
+                    yoDamageMultipliers.push(value);
+                } else if (SIMPLE_DAMAGE_SPECIAL_MULTIPLIER_REGEX.hi.test(label)) {
+                    hiDamageMultipliers.push(value);
+                } else if (SIMPLE_DAMAGE_SPECIAL_MULTIPLIER_REGEX.count.test(label)) {
+                    attackCountMultipliers.push(value);
+                } else if (row.stage === 'post') {
+                    ratioMultipliers.push(value);
+                } else {
+                    attackRatioMultipliers.push(value);
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    });
+
+    const attackRatioProduct = multiplyValues(attackRatioMultipliers);
+    const ratioDupProduct = multiplyValues(ratioMultipliers || []);
+    const giveDamageProduct = multiplyValues(giveDamageMultipliers || []);
+    const yoDamageProduct = multiplyValues(yoDamageMultipliers || []);
+    const hiDamageProduct = multiplyValues(hiDamageMultipliers || []);
+    const attackCountProduct = multiplyValues(attackCountMultipliers || []);
+
+    const attackValueBase = baseValue * attackRatioProduct + attackAddTotal;
+    const attackValueBeforeInspire = attackValueBase * ratioDupProduct;
+    const receivedRatioTotal = receivedInspireRatios.reduce((sum, ratio) => sum + ratio, 0);
+    const providedRatioTotal = providedInspireRatios.reduce((sum, ratio) => sum + ratio, 0);
+    const receivedContributionBase = attackValueBase * receivedRatioTotal;
+    const inspireDisplayValue = attackValueBeforeInspire * providedRatioTotal;
+
+    let attackValue = attackValueBeforeInspire;
+    if (ratioDupProduct > 1 && receivedContributionBase > 0) {
+        attackValue = (attackValueBase + receivedContributionBase * (ratioDupProduct - 1)) * ratioDupProduct;
+    }
+
+    const afterGiveDamage = attackValue * giveDamageProduct;
+    const enemyDefense = Number(profile.enemyDefense) || 0;
+    const damageAfterDefense = Math.max(afterGiveDamage - enemyDefense, 0);
+
+    let total = damageAfterDefense;
+    total *= yoDamageProduct;
+    total *= hiDamageProduct;
+    total *= attackCountProduct;
+
+    return {
+        total,
+        base: baseValue,
+        add: attackAddTotal,
+        inspire: inspireDisplayValue,
+        inspireProvided: inspireDisplayValue,
+        attackRatioMultipliers,
+        ratioMultipliers,
+        giveDamageMultipliers,
+        yoDamageMultipliers,
+        hiDamageMultipliers,
+        attackCountMultipliers
+    };
+}
+
+function renderSimpleDamageComparison() {
+    const container = document.getElementById('simpleDamageComparison');
+    if (!container) return;
+
+    if (simpleDamageProfiles.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const rows = simpleDamageProfiles
+        .map(profile => ({
+            name: profile.name,
+            total: Math.round(calculateSimpleDamage(profile).total || 0)
+        }))
+        .sort((a, b) => b.total - a.total);
+
+    const rowsHtml = rows.map((row, index) => `
+        <tr>
+            <td>${index + 1}</td>
+            <td>${row.name}</td>
+            <td>${formatNumber(row.total)}</td>
+        </tr>
+    `).join('');
+
+    container.innerHTML = `
+        <h3>結果比較</h3>
+        <table>
+            <thead>
+                <tr><th>#</th><th>セット名</th><th>ダメージ</th></tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+        </table>
+    `;
+}
+
+function toggleSimpleRow(profileId, rowId) {
+    const profile = simpleDamageProfiles.find(p => p.id === profileId);
+    if (!profile) return;
+    const row = profile.rows.find(r => r.id === rowId);
+    if (!row) return;
+    row.disabled = !row.disabled;
+    saveSimpleDamageData();
+    renderSimpleDamageTab();
+}
+
+function deleteSimpleRow(profileId, rowId) {
+    const profile = simpleDamageProfiles.find(p => p.id === profileId);
+    if (!profile) return;
+    profile.rows = profile.rows.filter(r => r.id !== rowId);
+    saveSimpleDamageData();
+    renderSimpleDamageTab();
+}
+
+// 既存ダメージ計算（β）関連
+const DAMAGE_SOURCE_LABELS = {
+    skill: '特技',
+    formation: '編成特技',
+    strategy: '計略'
+};
+const DAMAGE_ATTRIBUTE_KEYWORDS = ['水', '平', '山', '平山', '地獄', '無属性'];
+
+function updateDamageCharacterSearch(value = '') {
+    damageCharacterSearchTerm = (value || '').trim();
+    renderDamageCharacterList();
+}
+
+function renderDamageCharacterList() {
+    const container = document.getElementById('damageCharacterList');
+    if (!container) return;
+
+    const allCharacters = characters || [];
+    const hasSelected = allCharacters.some(c => c && c.id === selectedDamageCharacterId);
+    if (!hasSelected && selectedDamageCharacterId !== null) {
+        selectedDamageCharacterId = null;
+        damageConditionToggles = {};
+        renderSelectedDamageCharacter();
+        calculateDamage();
+    }
+
+    container.innerHTML = '';
+
+    if (allCharacters.length === 0) {
+        container.innerHTML = '<p style="color: #777; font-size: 14px;">キャラクターが登録されていません</p>';
+        return;
+    }
+
+    const searchTerm = damageCharacterSearchTerm.trim().toLowerCase();
+    const filtered = allCharacters
+        .slice()
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ja'))
+        .filter(char => {
+            if (!searchTerm) return true;
+            const target = [
+                char.name || '',
+                char.period || '',
+                char.weapon || '',
+                char.weaponRange || '',
+                char.weaponType || '',
+                (char.attributes || []).join(' ')
+            ].join(' ').toLowerCase();
+            return target.includes(searchTerm);
+        });
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<p style="color: #777; font-size: 14px;">該当するキャラクターが見つかりません</p>';
+        return;
+    }
+
+    filtered.forEach(char => {
+        const card = document.createElement('div');
+        const isSelected = char.id === selectedDamageCharacterId;
+        card.style.padding = '10px';
+        card.style.borderRadius = '8px';
+        card.style.border = isSelected ? '2px solid #3498db' : '1px solid #dcdcdc';
+        card.style.background = isSelected ? '#e7f3ff' : '#fff';
+        card.style.cursor = 'pointer';
+        card.style.transition = 'border-color 0.2s';
+        const weaponInfo = `${char.weapon || ''}${char.weaponRange ? ` (${char.weaponRange}${char.weaponType ? '/' + char.weaponType : ''})` : ''}`;
+        const attrInfo = char.attributes && char.attributes.length ? ` | ${char.attributes.join('・')}` : '';
+        card.innerHTML = `
+            <div style="font-weight: bold;">${char.period ? `[${char.period}] ` : ''}${char.name || '名称不明'}</div>
+            <div style="font-size: 12px; color: #555;">${weaponInfo}${attrInfo}</div>
+        `;
+        card.onclick = () => selectDamageCharacter(char.id);
+        container.appendChild(card);
+    });
+}
+
+function selectDamageCharacter(charId) {
+    if (selectedDamageCharacterId !== charId) {
+        damageConditionToggles = {};
+    }
+    selectedDamageCharacterId = charId;
+    renderDamageCharacterList();
+    renderSelectedDamageCharacter();
+    calculateDamage();
+}
+
+function renderSelectedDamageCharacter() {
+    const container = document.getElementById('selectedCharacterForDamage');
+    if (!container) return;
+
+    if (!selectedDamageCharacterId) {
+        container.innerHTML = '<p style="color: #666; text-align: center;">キャラクターを選択してください</p>';
+        return;
+    }
+
+    const char = characters.find(c => c.id === selectedDamageCharacterId);
+    if (!char) {
+        container.innerHTML = '<p style="color: #c0392b; text-align: center;">キャラクターデータが見つかりません</p>';
+        return;
+    }
+
+    const buildBuffList = (label, buffs) => {
+        const list = (buffs || []).map(buff => `<li>${escapeHtml(buff)}</li>`).join('');
+        return `
+            <div style="margin-top: 10px;">
+                <strong>${label}</strong>
+                <ul style="margin: 5px 0 0 18px; padding: 0;">${list || '<li style="color: #999;">なし</li>'}</ul>
+            </div>
+        `;
+    };
+
+    container.innerHTML = `
+        <div>
+            <div style="font-weight: bold; font-size: 18px; margin-bottom: 5px;">${char.period ? `[${char.period}] ` : ''}${char.name}</div>
+            <div style="color: #555; font-size: 13px;">
+                ${char.weapon || ''}${char.weaponRange ? ` (${char.weaponRange}${char.weaponType ? '/' + char.weaponType : ''})` : ''}
+                ${char.attributes && char.attributes.length ? ` | ${char.attributes.join('・')}` : ''}
+            </div>
+            ${buildBuffList('特技', char.skills)}
+            ${buildBuffList('編成特技', char.formationSkills)}
+            ${buildBuffList('計略', char.strategies)}
+        </div>
+    `;
+}
+
+function doesBuffApplyToCharacter(parsed, character) {
+    if (!parsed) return true;
+    const targetText = parsed.target || '';
+    if (!targetText) return true;
+
+    if (/殿/.test(targetText) || /伏兵/.test(targetText)) {
+        return false;
+    }
+
+    const attrs = character.attributes || [];
+    const requiredAttrs = DAMAGE_ATTRIBUTE_KEYWORDS.filter(attr => targetText.includes(attr));
+    if (requiredAttrs.length > 0) {
+        return requiredAttrs.some(attr => attrs.includes(attr));
+    }
+
+    return true;
+}
+
+function classifyDamageBuffCondition(parsed, buffText, sourceType) {
+    const raw = (parsed && parsed.condition ? parsed.condition : '').trim().replace(/^条件[:：]?/, '');
+    const normalized = raw.replace(/\s+/g, '');
+
+    if (sourceType === 'strategy') {
+        return { type: 'strategy', label: raw || '計略発動中' };
+    }
+
+    if (!raw) {
+        return { type: 'always', label: '' };
+    }
+
+    if (/計略/.test(normalized)) {
+        return { type: 'strategy', label: raw };
+    }
+
+    const hpCondition = parseHpCondition(normalized, raw);
+    if (hpCondition) {
+        return hpCondition;
+    }
+
+    return { type: 'manual', label: raw || '条件' };
+}
+
+function parseHpCondition(normalized, rawText) {
+    if (!/(耐久|HP)/.test(normalized)) {
+        return null;
+    }
+
+    const isEnemy = /敵/.test(normalized);
+    const thresholdMatch = normalized.match(/(\d+)[％%]?/);
+    const threshold = thresholdMatch ? parseInt(thresholdMatch[1], 10) : null;
+    const isAbove = /(以上|超|より上)/.test(normalized);
+    const isBelow = /(以下|未満|より下)/.test(normalized);
+
+    if (threshold === null || (!isAbove && !isBelow)) {
+        return { type: 'manual', label: rawText };
+    }
+
+    const typeKey = `${isEnemy ? 'enemy' : 'ally'}Hp${isAbove ? 'Above' : 'Below'}`;
+    return { type: typeKey, threshold, label: rawText };
+}
+
+function evaluateDamageBuffCondition(conditionInfo, context, conditionId) {
+    switch (conditionInfo.type) {
+        case 'always':
+            return true;
+        case 'strategy':
+            return !!context.strategyActive;
+        case 'enemyHpBelow':
+            return context.enemyHpPercent <= conditionInfo.threshold;
+        case 'enemyHpAbove':
+            return context.enemyHpPercent >= conditionInfo.threshold;
+        case 'allyHpBelow':
+            return context.allyHpPercent <= conditionInfo.threshold;
+        case 'allyHpAbove':
+            return context.allyHpPercent >= conditionInfo.threshold;
+        case 'manual':
+        default:
+            if (!(conditionId in damageConditionToggles)) {
+                damageConditionToggles[conditionId] = false;
+            }
+            return !!damageConditionToggles[conditionId];
+    }
+}
+
+function collectDamageBuffEffects(character, context) {
+    const stats = {
+        attackFlat: 0,
+        attackFlatDetails: [],
+        attackPercent: 0,
+        attackPercentDetails: [],
+        attackMultipliers: [],
+        attackMultiplierDetails: [],
+        damagePercent: 0,
+        damagePercentDetails: [],
+        damageMultipliers: [],
+        damageMultiplierDetails: [],
+        enemyDefenseDebuffFlat: 0,
+        enemyDefenseDebuffFlatDetails: [],
+        enemyDefenseDebuffPercent: 0,
+        enemyDefenseDebuffPercentDetails: [],
+        ignoreDefense: false,
+        ignoreDefenseDetails: [],
+        receivedDamagePercent: 0,
+        receivedDamagePercentDetails: [],
+        receivedDamageMultipliers: [],
+        receivedDamageMultiplierDetails: []
+    };
+
+    const manualConditions = [];
+    const sources = [
+        { list: character.skills || [], type: 'skill' },
+        { list: character.formationSkills || [], type: 'formation' },
+        { list: character.strategies || [], type: 'strategy' }
+    ];
+
+    sources.forEach(source => {
+        source.list.forEach((buffText, index) => {
+            if (!buffText) return;
+            const parsed = parseBuff(buffText);
+            if (!parsed) return;
+            if (!doesBuffApplyToCharacter(parsed, character)) return;
+
+            const conditionInfo = classifyDamageBuffCondition(parsed, buffText, source.type);
+            const conditionId = `${source.type}-${index}-${buffText}`;
+            const applies = evaluateDamageBuffCondition(conditionInfo, context, conditionId);
+
+            if (conditionInfo.type === 'manual') {
+                manualConditions.push({
+                    id: conditionId,
+                    effect: `${DAMAGE_SOURCE_LABELS[source.type] || '効果'}: ${buffText}`,
+                    label: conditionInfo.label || parsed.condition || '条件',
+                    applied: applies
+                });
+            }
+
+            if (!applies) return;
+            applyBuffEffect(stats, parsed, buffText, source.type);
+        });
+    });
+
+    return { stats, manualConditions };
+}
+
+function parseNumericValue(value) {
+    if (typeof value === 'number') {
+        return value;
+    }
+    if (typeof value !== 'string') {
+        return 0;
+    }
+    const normalized = value.replace(/[＋]/g, '+').replace(/[－]/g, '-').replace(/[^0-9.+-]/g, '');
+    const parsed = parseFloat(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getSignedNumericValue(parsed, buffText) {
+    let numeric = parseNumericValue(parsed.value);
+    if (parsed.unit === '-%' || parsed.unit === '-') {
+        numeric = -Math.abs(numeric);
+    } else if (parsed.unit === '+%' || parsed.unit === '+') {
+        numeric = Math.abs(numeric);
+    }
+
+    if (!parsed.unit && /^-/.test(parsed.value || '')) {
+        numeric = -Math.abs(numeric);
+    }
+
+    if (parsed.type === '被ダメ') {
+        if (/(低下|減少|軽減|半減)/.test(buffText)) {
+            numeric = -Math.abs(numeric);
+        } else if (/(上昇|増加|強化)/.test(buffText)) {
+            numeric = Math.abs(numeric);
+        }
+    }
+
+    return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function applyBuffEffect(stats, parsed, buffText, sourceType) {
+    if (!parsed || !parsed.type) return;
+    const labelBase = `${DAMAGE_SOURCE_LABELS[sourceType] || '効果'}: ${buffText}`;
+    const numericValue = parseNumericValue(parsed.value);
+    const signedValue = getSignedNumericValue(parsed, buffText);
+
+    switch (parsed.type) {
+        case '攻撃固定':
+            stats.attackFlat += signedValue;
+            stats.attackFlatDetails.push(`${labelBase} (${signedValue >= 0 ? '+' : ''}${signedValue})`);
+            break;
+        case '攻撃割合':
+            if (parsed.unit === '×') {
+                if (numericValue > 0) {
+                    stats.attackMultipliers.push(numericValue);
+                    stats.attackMultiplierDetails.push(`${labelBase} (${numericValue.toFixed(2)}×)`);
+                }
+            } else {
+                stats.attackPercent += signedValue;
+                stats.attackPercentDetails.push(`${labelBase} (${signedValue >= 0 ? '+' : ''}${signedValue}%)`);
+            }
+            break;
+        case '与えるダメージ':
+        case '与ダメ':
+            if (parsed.unit === '×') {
+                if (numericValue > 0) {
+                    stats.damageMultipliers.push(numericValue);
+                    stats.damageMultiplierDetails.push(`${labelBase} (${numericValue.toFixed(2)}×)`);
+                }
+            } else {
+                stats.damagePercent += signedValue;
+                stats.damagePercentDetails.push(`${labelBase} (${signedValue >= 0 ? '+' : ''}${signedValue}%)`);
+            }
+            break;
+        case '防御デバフ固定':
+            if (numericValue > 0) {
+                stats.enemyDefenseDebuffFlat += numericValue;
+                stats.enemyDefenseDebuffFlatDetails.push(`${labelBase} (-${numericValue})`);
+            }
+            break;
+        case '防御デバフ割合':
+            if (numericValue > 0) {
+                stats.enemyDefenseDebuffPercent += numericValue;
+                stats.enemyDefenseDebuffPercentDetails.push(`${labelBase} (-${numericValue}%)`);
+            }
+            break;
+        case '防御無視':
+            stats.ignoreDefense = true;
+            stats.ignoreDefenseDetails.push(labelBase);
+            break;
+        case '被ダメ':
+            if (parsed.unit === '×') {
+                if (numericValue > 0) {
+                    stats.receivedDamageMultipliers.push(numericValue);
+                    stats.receivedDamageMultiplierDetails.push(`${labelBase} (${numericValue.toFixed(2)}×)`);
+                }
+            } else {
+                stats.receivedDamagePercent += signedValue;
+                stats.receivedDamagePercentDetails.push(`${labelBase} (${signedValue >= 0 ? '+' : ''}${signedValue}%)`);
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+function formatNumber(value) {
+    if (!Number.isFinite(value)) return '-';
+    return Math.round(value).toLocaleString();
+}
+
+function formatSignedNumber(value) {
+    if (!Number.isFinite(value) || value === 0) return '0';
+    const rounded = Math.round(value * 10) / 10;
+    return rounded > 0 ? `+${rounded}` : `${rounded}`;
+}
+
+function formatPercent(value) {
+    if (!Number.isFinite(value)) return '0%';
+    const rounded = Math.round(value * 10) / 10;
+    return `${Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(1)}%`;
+}
+
+function renderDetailList(details) {
+    if (!details || details.length === 0) {
+        return '<div style="font-size: 12px; color: #999;">該当なし</div>';
+    }
+    const items = details.map(item => `<li>${escapeHtml(item)}</li>`).join('');
+    return `<ul style="margin: 4px 0 10px 18px; padding: 0; list-style: disc;">${items}</ul>`;
+}
+
+function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function renderDamageConditionControls(entries) {
+    const list = document.getElementById('damageConditionList');
+    if (!list) return;
+
+    const validIds = new Set(entries.map(entry => entry.id));
+    Object.keys(damageConditionToggles).forEach(id => {
+        if (!validIds.has(id)) {
+            delete damageConditionToggles[id];
+        }
+    });
+
+    if (!entries.length) {
+        list.innerHTML = '<p style="color: #777; font-size: 14px;">手動で切り替える条件付きバフはありません</p>';
+        return;
+    }
+
+    list.innerHTML = entries.map(entry => `
+        <label style="display: flex; gap: 10px; align-items: flex-start; border: 1px solid #eee; border-radius: 6px; padding: 8px;">
+            <input type="checkbox" data-condition-id="${escapeHtml(entry.id)}" ${entry.applied ? 'checked' : ''}>
+            <div style="font-size: 13px;">
+                <div style="font-weight: bold;">${escapeHtml(entry.effect)}</div>
+                <div style="color: #666;">条件: ${escapeHtml(entry.label)}</div>
+            </div>
+        </label>
+    `).join('');
+
+    list.querySelectorAll('input[data-condition-id]').forEach(input => {
+        input.addEventListener('change', (event) => {
+            const conditionId = event.target.dataset.conditionId;
+            toggleDamageCondition(conditionId, event.target.checked);
+        });
+    });
+}
+
+function toggleDamageCondition(conditionId, isChecked) {
+    damageConditionToggles[conditionId] = isChecked;
+    calculateDamage();
+}
+
+function calculateDamage() {
+    const resultDiv = document.getElementById('damageResult');
+    const breakdownDiv = document.getElementById('damageBreakdown');
+    if (!resultDiv || !breakdownDiv) return;
+
+    if (!selectedDamageCharacterId) {
+        resultDiv.innerHTML = '<p style="color: #666; text-align: center;">キャラクターを選択すると計算結果が表示されます</p>';
+        breakdownDiv.innerHTML = '<p style="color: #666; text-align: center;">計算内訳はここに表示されます</p>';
+        renderDamageConditionControls([]);
+        return;
+    }
+
+    const char = characters.find(c => c.id === selectedDamageCharacterId);
+    if (!char) {
+        resultDiv.innerHTML = '<p style="color: #c0392b; text-align: center;">キャラクターデータが見つかりません</p>';
+        breakdownDiv.innerHTML = '';
+        renderDamageConditionControls([]);
+        return;
+    }
+
+    const baseAttack = parseFloat(document.getElementById('baseAttackInput')?.value || '0') || 0;
+    const enemyDefenseInput = parseFloat(document.getElementById('enemyDefense')?.value || '0') || 0;
+    const enemyHpPercent = parseInt(document.getElementById('enemyHP')?.value || '0', 10) || 0;
+    const allyHpPercent = parseInt(document.getElementById('allyHP')?.value || '0', 10) || 0;
+    const hitCount = Math.max(1, parseInt(document.getElementById('hitCount')?.value || '1', 10) || 1);
+    const strategyActive = document.getElementById('strategyActive')?.checked || false;
+
+    const context = { strategyActive, enemyHpPercent, allyHpPercent };
+    const { stats, manualConditions } = collectDamageBuffEffects(char, context);
+    renderDamageConditionControls(manualConditions);
+
+    const attackBase = baseAttack + stats.attackFlat;
+    const attackPercentMultiplier = Math.max(0, 1 + stats.attackPercent / 100);
+    const attackMultiplierProduct = stats.attackMultipliers.reduce((acc, mult) => acc * mult, 1) || 1;
+    const finalAttack = Math.max(0, attackBase * attackPercentMultiplier * attackMultiplierProduct);
+
+    let effectiveDefense = enemyDefenseInput;
+    if (stats.enemyDefenseDebuffFlat > 0) {
+        effectiveDefense = Math.max(0, effectiveDefense - stats.enemyDefenseDebuffFlat);
+    }
+    if (stats.enemyDefenseDebuffPercent > 0) {
+        const cappedPercent = Math.min(100, stats.enemyDefenseDebuffPercent);
+        effectiveDefense = Math.max(0, effectiveDefense * (1 - cappedPercent / 100));
+    }
+    if (stats.ignoreDefense) {
+        effectiveDefense = 0;
+    }
+
+    const damagePercentMultiplier = Math.max(0, 1 + stats.damagePercent / 100);
+    const damageMultiplierProduct = stats.damageMultipliers.reduce((acc, mult) => acc * mult, 1) || 1;
+    const totalDamageMultiplier = damagePercentMultiplier * damageMultiplierProduct;
+
+    let damagePerHit = Math.max(0, finalAttack - effectiveDefense);
+    damagePerHit *= totalDamageMultiplier;
+    const totalDamage = damagePerHit * hitCount;
+
+    const receivedPercentMultiplier = Math.max(0, 1 + stats.receivedDamagePercent / 100);
+    const receivedMultiplierProduct = stats.receivedDamageMultipliers.reduce((acc, mult) => acc * mult, 1) || 1;
+    const receivedDamageMultiplier = receivedPercentMultiplier * receivedMultiplierProduct;
+
+    resultDiv.innerHTML = `
+        <div style="font-weight: bold; font-size: 18px;">${char.period ? `[${char.period}] ` : ''}${char.name}</div>
+        <ul style="list-style: none; padding-left: 0; margin: 10px 0; line-height: 1.8;">
+            <li>最終攻撃力: <strong>${formatNumber(finalAttack)}</strong></li>
+            <li>1ヒットダメージ: <strong>${formatNumber(damagePerHit)}</strong></li>
+            <li>合計ダメージ（ヒット${hitCount}）: <strong>${formatNumber(totalDamage)}</strong></li>
+            <li>敵の有効防御: <strong>${formatNumber(effectiveDefense)}</strong></li>
+            <li>被ダメージ倍率: <strong>${receivedDamageMultiplier.toFixed(2)}×</strong></li>
+        </ul>
+    `;
+
+    const attackMultiplierDisplay = stats.attackMultipliers.length
+        ? stats.attackMultipliers.map(mult => `${mult.toFixed(2)}×`).join(' × ')
+        : '1.00×';
+    const damageMultiplierDisplay = stats.damageMultipliers.length
+        ? stats.damageMultipliers.map(mult => `${mult.toFixed(2)}×`).join(' × ')
+        : '1.00×';
+    const receivedMultiplierDisplay = stats.receivedDamageMultipliers.length
+        ? stats.receivedDamageMultipliers.map(mult => `${mult.toFixed(2)}×`).join(' × ')
+        : '1.00×';
+
+    breakdownDiv.innerHTML = `
+        <div style="margin-bottom: 15px;">
+            <strong>攻撃補正</strong>
+            <div>基礎攻撃力: ${formatNumber(baseAttack)}</div>
+            <div>攻撃固定合計: ${formatSignedNumber(stats.attackFlat)}</div>
+            ${renderDetailList(stats.attackFlatDetails)}
+            <div>攻撃割合合計: ${formatPercent(stats.attackPercent)}</div>
+            ${renderDetailList(stats.attackPercentDetails)}
+            <div>攻撃乗算: ${attackMultiplierDisplay}</div>
+            ${renderDetailList(stats.attackMultiplierDetails)}
+        </div>
+        <div style="margin-bottom: 15px;">
+            <strong>敵防御/デバフ</strong>
+            <div>基礎防御: ${formatNumber(enemyDefenseInput)}</div>
+            <div>固定デバフ合計: ${stats.enemyDefenseDebuffFlat ? `-${formatNumber(stats.enemyDefenseDebuffFlat)}` : '0'}</div>
+            ${renderDetailList(stats.enemyDefenseDebuffFlatDetails)}
+            <div>割合デバフ合計: ${formatPercent(-stats.enemyDefenseDebuffPercent)}</div>
+            ${renderDetailList(stats.enemyDefenseDebuffPercentDetails)}
+            <div>防御無視: ${stats.ignoreDefense ? 'あり' : 'なし'}</div>
+            ${renderDetailList(stats.ignoreDefenseDetails)}
+        </div>
+        <div style="margin-bottom: 15px;">
+            <strong>与ダメージ補正</strong>
+            <div>与ダメ加算: ${formatPercent(stats.damagePercent)}</div>
+            ${renderDetailList(stats.damagePercentDetails)}
+            <div>与ダメ乗算: ${damageMultiplierDisplay}</div>
+            ${renderDetailList(stats.damageMultiplierDetails)}
+        </div>
+        <div>
+            <strong>被ダメージ補正</strong>
+            <div>被ダメ加算: ${formatPercent(stats.receivedDamagePercent)}</div>
+            ${renderDetailList(stats.receivedDamagePercentDetails)}
+            <div>被ダメ乗算: ${receivedMultiplierDisplay}</div>
+            ${renderDetailList(stats.receivedDamageMultiplierDetails)}
+        </div>
+    `;
+}
+
+function updateEnemyHPDisplay() {
+    const slider = document.getElementById('enemyHP');
+    const display = document.getElementById('enemyHPDisplay');
+    if (!slider || !display) return;
+    display.textContent = `${slider.value}%`;
+}
+
+function updateAllyHPDisplay() {
+    const slider = document.getElementById('allyHP');
+    const display = document.getElementById('allyHPDisplay');
+    if (!slider || !display) return;
+    display.textContent = `${slider.value}%`;
+}
+
+function setActiveTab(tabName, options = {}) {
+    const tabButton = document.querySelector(`.tab[data-tab="${tabName}"]`);
+    const tabContent = document.getElementById(tabName);
+    if (!tabButton || !tabContent) return;
+
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tabButton.classList.add('active');
+
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    tabContent.classList.add('active');
+
+    if (!options.skipSave) {
+        localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, tabName);
+    }
+
+    if (tabName === 'formation') {
+        renderAvailableCharacters();
+        renderFormation();
+    }
+
+    if (tabName === 'comparison') {
+        renderFormationSelector();
+        renderComparisonChart();
+    }
+}
+
 document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
         const tabName = tab.dataset.tab;
-
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.getElementById(tabName).classList.add('active');
-
-        // 編成タブに切り替えたら利用可能なキャラクターを表示
-        if (tabName === 'formation') {
-            renderAvailableCharacters();
-            renderFormation();
-        }
-
-        // 比較タブに切り替えたら編成セレクターを表示
-        if (tabName === 'comparison') {
-            renderFormationSelector();
-            renderComparisonChart();
-        }
+        setActiveTab(tabName);
     });
 });
 
 // 初期化
 loadData();
+updateEnemyHPDisplay();
+updateAllyHPDisplay();
+calculateDamage();
+initializeSimpleDamageModule();
+
+const savedTabName = localStorage.getItem(ACTIVE_TAB_STORAGE_KEY) || 'characters';
+setActiveTab(savedTabName, { skipSave: true });
+applyNumericInputMode();

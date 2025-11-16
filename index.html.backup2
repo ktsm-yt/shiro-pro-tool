@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>城プロ編成ツール</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🏯 城プロ編成ツール</h1>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="characters">キャラクター管理</button>
+            <button class="tab" data-tab="formation">編成作成</button>
+            <button class="tab" data-tab="comparison">編成比較</button>
+        </div>
+
+        <div id="characters" class="tab-content active">
+            <h2>キャラクター管理</h2>
+
+            <div class="character-form">
+                <h3 id="formTitle">新規キャラクター追加</h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>名前</label>
+                        <input type="text" id="charName" placeholder="例：ドレッドノート">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>期間（オプション）</label>
+                        <input type="text" id="charPeriod" placeholder="例：嫁、暁星">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>武器種</label>
+                        <input type="text" id="charWeapon" placeholder="例：軍船">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>遠近</label>
+                        <div class="button-group" style="margin-bottom: 0;">
+                            <button type="button" class="select-button compact" data-group="weaponRange" data-value="遠">遠</button>
+                            <button type="button" class="select-button compact" data-group="weaponRange" data-value="近">近</button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>物術</label>
+                        <div class="button-group" style="margin-bottom: 0;">
+                            <button type="button" class="select-button compact" data-group="weaponType" data-value="物">物</button>
+                            <button type="button" class="select-button compact" data-group="weaponType" data-value="術">術</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>属性（複数選択可）</label>
+                        <div class="button-group" style="margin-bottom: 0;">
+                            <button type="button" class="select-button compact multi-select" data-group="attribute" data-value="水">水</button>
+                            <button type="button" class="select-button compact multi-select" data-group="attribute" data-value="平">平</button>
+                            <button type="button" class="select-button compact multi-select" data-group="attribute" data-value="山">山</button>
+                            <button type="button" class="select-button compact multi-select" data-group="attribute" data-value="平山">平山</button>
+                            <button type="button" class="select-button compact multi-select" data-group="attribute" data-value="地獄">地獄</button>
+                            <button type="button" class="select-button compact multi-select" data-group="attribute" data-value="無属性">無属性</button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>配置</label>
+                        <div class="button-group" style="margin-bottom: 0;">
+                            <button type="button" class="select-button compact" data-group="placement" data-value="遠">遠</button>
+                            <button type="button" class="select-button compact" data-group="placement" data-value="近">近</button>
+                            <button type="button" class="select-button compact" data-group="placement" data-value="遠近">遠近</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 特技入力 -->
+                <div class="form-group">
+                    <label>特技</label>
+                    <div class="buff-input-area">
+                        <div class="button-group">
+                            <label>対象</label>
+                            <button type="button" class="select-button" data-group="skillTarget" data-value="自身">自身</button>
+                            <button type="button" class="select-button" data-group="skillTarget" data-value="味方射程内">味方射程内</button>
+                            <button type="button" class="select-button" data-group="skillTarget" data-value="味方全員">味方全員</button>
+                        </div>
+                        <div class="button-group">
+                            <label>バフ種</label>
+                            <!-- 気 -->
+                            <button type="button" class="select-button" data-group="skillType" data-value="自然気">自然気</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="気(牛)">気(牛)</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="気(ノビ)">気(ノビ)</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="徐々気">徐々気</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="気軽減">気軽減</button>
+                            <!-- 計略 -->
+                            <button type="button" class="select-button" data-group="skillType" data-value="計略短縮">計略短縮</button>
+                            <!-- 攻撃 -->
+                            <button type="button" class="select-button" data-group="skillType" data-value="攻撃固定">攻撃固定</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="攻撃割合">攻撃割合</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="与ダメ">与ダメ</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="与えるダメージ">与えるダメージ</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="被ダメ">被ダメ</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="割合重複">割合重複</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="防御デバフ固定">防御デバフ固定</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="防御デバフ割合">防御デバフ割合</button>
+                            <!-- 防御 -->
+                            <button type="button" class="select-button" data-group="skillType" data-value="防御">防御</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="攻撃デバフ固定">攻撃デバフ固定</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="攻撃デバフ割合">攻撃デバフ割合</button>
+                            <!-- 速度 -->
+                            <button type="button" class="select-button" data-group="skillType" data-value="速度">速度</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="隙">隙</button>
+                            <!-- 移動 -->
+                            <button type="button" class="select-button" data-group="skillType" data-value="移動変更">移動変更</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="移動低下">移動低下</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="移動停止">移動停止</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="移動後退">移動後退</button>
+                            <!-- 射程 -->
+                            <button type="button" class="select-button" data-group="skillType" data-value="射程固定">射程固定</button>
+                            <button type="button" class="select-button" data-group="skillType" data-value="射程割合">射程割合</button>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="number" id="skillValue" placeholder="数値" style="width: 80px;">
+                            <select id="skillUnit" style="width: 80px;">
+                                <option value="+%">+%</option>
+                                <option value="-%">-%</option>
+                                <option value="×">×</option>
+                                <option value="+">+</option>
+                                <option value="-">-</option>
+                            </select>
+                            <input type="text" id="skillCondition" placeholder="条件（オプション）" style="flex: 1;">
+                            <button class="btn" onclick="addSkillBuff()" style="padding: 8px 15px;">追加</button>
+                        </div>
+                        <div id="skillsList" class="buffs-list"></div>
+                    </div>
+                </div>
+
+                <!-- 編成特技入力 -->
+                <div class="form-group">
+                    <label class="collapsible-label" onclick="toggleCollapsible(this)">編成特技</label>
+                    <div class="collapsible-content">
+                        <div class="buff-input-area">
+                        <div class="button-group">
+                            <label>対象</label>
+                            <button type="button" class="select-button" data-group="formationTarget" data-value="味方全員">味方全員</button>
+                            <button type="button" class="select-button" data-group="formationTarget" data-value="味方軍船">味方軍船</button>
+                            <button type="button" class="select-button" data-group="formationTarget" data-value="味方水城">味方水城</button>
+                        </div>
+                        <div class="button-group">
+                            <label>バフ種</label>
+                            <!-- 気 -->
+                            <button type="button" class="select-button" data-group="formationType" data-value="気">気</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="耐久">耐久</button>
+                            <!-- 計略 -->
+                            <button type="button" class="select-button" data-group="formationType" data-value="計略短縮">計略短縮</button>
+                            <!-- 攻撃 -->
+                            <button type="button" class="select-button" data-group="formationType" data-value="攻撃固定">攻撃固定</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="攻撃割合">攻撃割合</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="割合重複">割合重複</button>
+                            <!-- 防御 -->
+                            <button type="button" class="select-button" data-group="formationType" data-value="防御">防御</button>
+                            <!-- 速度 -->
+                            <button type="button" class="select-button" data-group="formationType" data-value="速度">速度</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="隙">隙</button>
+                            <!-- 移動 -->
+                            <button type="button" class="select-button" data-group="formationType" data-value="移動変更">移動変更</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="移動低下">移動低下</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="移動停止">移動停止</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="移動後退">移動後退</button>
+                            <!-- 射程 -->
+                            <button type="button" class="select-button" data-group="formationType" data-value="射程固定">射程固定</button>
+                            <button type="button" class="select-button" data-group="formationType" data-value="射程割合">射程割合</button>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="number" id="formationValue" placeholder="数値" style="width: 80px;">
+                            <select id="formationUnit" style="width: 80px;">
+                                <option value="+%">+%</option>
+                                <option value="+">+</option>
+                                <option value="-">-</option>
+                            </select>
+                            <input type="text" id="formationCondition" placeholder="条件（オプション）" style="flex: 1;">
+                            <button class="btn" onclick="addFormationBuff()" style="padding: 8px 15px;">追加</button>
+                        </div>
+                        <div id="formationsList" class="buffs-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 計略入力 -->
+                <div class="form-group">
+                    <label>計略</label>
+                    <div class="buff-input-area">
+                        <div class="button-group">
+                            <label>対象</label>
+                            <button type="button" class="select-button" data-group="strategyTarget" data-value="自身">自身</button>
+                            <button type="button" class="select-button" data-group="strategyTarget" data-value="味方射程内">味方射程内</button>
+                            <button type="button" class="select-button" data-group="strategyTarget" data-value="伏兵射程内">伏兵射程内</button>
+                        </div>
+                        <div class="button-group">
+                            <label>バフ種</label>
+                            <!-- 気 -->
+                            <button type="button" class="select-button" data-group="strategyType" data-value="自然気">自然気</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="気(牛)">気(牛)</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="気(ノビ)">気(ノビ)</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="徐々気">徐々気</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="気軽減">気軽減</button>
+                            <!-- 計略 -->
+                            <button type="button" class="select-button" data-group="strategyType" data-value="計略短縮">計略短縮</button>
+                            <!-- 攻撃 -->
+                            <button type="button" class="select-button" data-group="strategyType" data-value="攻撃固定">攻撃固定</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="攻撃割合">攻撃割合</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="与ダメ">与ダメ</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="与えるダメージ">与えるダメージ</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="被ダメ">被ダメ</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="割合重複">割合重複</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="防御デバフ固定">防御デバフ固定</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="防御デバフ割合">防御デバフ割合</button>
+                            <!-- 防御 -->
+                            <button type="button" class="select-button" data-group="strategyType" data-value="防御">防御</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="攻撃デバフ固定">攻撃デバフ固定</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="攻撃デバフ割合">攻撃デバフ割合</button>
+                            <!-- 速度 -->
+                            <button type="button" class="select-button" data-group="strategyType" data-value="速度">速度</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="隙">隙</button>
+                            <!-- 移動 -->
+                            <button type="button" class="select-button" data-group="strategyType" data-value="移動変更">移動変更</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="移動低下">移動低下</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="移動停止">移動停止</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="移動後退">移動後退</button>
+                            <!-- 射程 -->
+                            <button type="button" class="select-button" data-group="strategyType" data-value="射程固定">射程固定</button>
+                            <button type="button" class="select-button" data-group="strategyType" data-value="射程割合">射程割合</button>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="number" id="strategyValue" placeholder="数値" style="width: 80px;">
+                            <select id="strategyUnit" style="width: 80px;">
+                                <option value="+%">+%</option>
+                                <option value="-%">-%</option>
+                                <option value="×">×</option>
+                                <option value="+">+</option>
+                                <option value="-">-</option>
+                            </select>
+                            <input type="text" id="strategyCondition" placeholder="条件（オプション）" style="flex: 1;">
+                            <button class="btn" onclick="addStrategyBuff()" style="padding: 8px 15px;">追加</button>
+                        </div>
+                        <div id="strategiesList" class="buffs-list"></div>
+                    </div>
+                </div>
+
+                <button class="btn" id="submitBtn" onclick="submitCharacter()">キャラクター追加</button>
+                <button class="btn" id="cancelEditBtn" onclick="cancelEdit()" style="background: #95a5a6; display: none; margin-left: 10px;">キャンセル</button>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                <h3>データ管理</h3>
+                <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                    <button class="btn" onclick="exportCharacters()" style="background: #43e97b;">
+                        キャラクターデータをエクスポート
+                    </button>
+                    <button class="btn" onclick="importCharacters()" style="background: #4facfe;">
+                        キャラクターデータをインポート
+                    </button>
+                    <button class="btn" onclick="exportFormations()" style="background: #fd79a8;">
+                        編成データをエクスポート
+                    </button>
+                    <button class="btn" onclick="importFormations()" style="background: #f093fb;">
+                        編成データをインポート
+                    </button>
+                    <button class="btn" onclick="exportAllData()" style="background: #667eea;">
+                        全データをエクスポート
+                    </button>
+                </div>
+                <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="handleFileSelect(event)">
+                <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                    ※ エクスポートしたデータはJSON形式でダウンロードされます<br>
+                    ※ インポートは既存データに追加されます（IDが重複する場合は上書き）
+                </p>
+            </div>
+
+            <h3>キャラクター一覧</h3>
+            <div class="character-grid" id="characterGrid"></div>
+        </div>
+
+        <div id="formation" class="tab-content">
+            <h2>編成作成</h2>
+
+            <div class="character-selection">
+                <h3>キャラクター選択（クリックで追加・削除）</h3>
+                <div class="character-grid compact-grid" id="availableCharacters"></div>
+            </div>
+
+            <div class="chart-section">
+                <h3>編成バフ/デバフ強度</h3>
+                <div class="bar-chart" id="barChart"></div>
+            </div>
+
+            <div class="formation-section">
+                <h3>編成メンバー（<span id="memberCount">0</span>/8）</h3>
+                <div id="formationStats" class="formation-stats"></div>
+                <div class="formation-grid" id="formationGrid">
+                    <div class="formation-slot empty" data-slot="0">空き</div>
+                    <div class="formation-slot empty" data-slot="1">空き</div>
+                    <div class="formation-slot empty" data-slot="2">空き</div>
+                    <div class="formation-slot empty" data-slot="3">空き</div>
+                    <div class="formation-slot empty" data-slot="4">空き</div>
+                    <div class="formation-slot empty" data-slot="5">空き</div>
+                    <div class="formation-slot empty" data-slot="6">空き</div>
+                    <div class="formation-slot empty" data-slot="7">空き</div>
+                </div>
+                <div class="formation-actions">
+                    <input type="text" id="formationName" placeholder="編成名を入力" />
+                    <button class="btn" onclick="saveFormation()">編成を保存</button>
+                    <button class="btn" onclick="clearFormation()" style="background: #ff4757;">編成をクリア</button>
+                </div>
+            </div>
+
+            <div class="saved-formations">
+                <h3>保存した編成</h3>
+                <div id="savedFormationsList"></div>
+            </div>
+        </div>
+
+        <div id="comparison" class="tab-content">
+            <h2>編成比較</h2>
+
+            <div class="comparison-section">
+                <h3>比較する編成を選択</h3>
+                <div id="formationSelector"></div>
+            </div>
+
+            <div class="comparison-chart-section">
+                <h3>バフ/デバフ強度比較</h3>
+                <div id="comparisonChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
