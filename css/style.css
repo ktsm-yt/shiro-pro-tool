@@ -1175,6 +1175,13 @@ h1 {
     flex-wrap: wrap;
 }
 
+.simple-damage-header-right {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-end;
+}
+
 .simple-damage-global-actions {
     display: flex;
     gap: 10px;
@@ -1194,6 +1201,30 @@ h1 {
 
 .simple-damage-toggle-all:hover {
     background: #dfe4ff;
+}
+
+.simple-damage-global-settings {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.simple-damage-global-settings label {
+    font-size: 12px;
+    color: #555;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.simple-damage-global-settings input {
+    min-width: 120px;
+    padding: 6px 8px;
+    border: 1px solid #cfd7ff;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
 }
 
 .simple-damage-card {
@@ -1216,12 +1247,35 @@ h1 {
     font-size: 18px;
     color: #333;
     margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .simple-damage-card .result-value {
     font-size: 26px;
     font-weight: bold;
     color: #e74c3c;
+}
+
+.simple-damage-card-inspire {
+    margin-bottom: 10px;
+}
+
+.simple-damage-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #ffe08a;
+    color: #a05a00;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.simple-damage-badge-self {
+    background: #e0e7ff;
+    color: #3b5bdb;
 }
 
 .simple-damage-card-actions {
@@ -1259,6 +1313,15 @@ h1 {
 .simple-damage-editor.highlight {
     border-color: #f093fb;
     box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.4);
+}
+
+.simple-damage-global-summary {
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    color: #5c6ac4;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
 }
 
 .simple-damage-header-actions {

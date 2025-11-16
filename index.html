@@ -440,9 +440,25 @@
                     <h2>簡易ダメージ計算</h2>
                     <p style="color: #666; margin-bottom: 0;">行を組み合わせてシンプルにダメージを見積もることができます。複数の計算セットを並べて比較できます。</p>
                 </div>
-                <div class="simple-damage-global-actions">
-                    <button type="button" class="btn simple-damage-toggle-all" onclick="expandAllSimpleDamageEditors()">全て開く</button>
-                    <button type="button" class="btn simple-damage-toggle-all" onclick="collapseAllSimpleDamageEditors()">全て閉じる</button>
+                <div class="simple-damage-header-right">
+                    <div class="simple-damage-global-actions">
+                        <button type="button" class="btn simple-damage-toggle-all" onclick="expandAllSimpleDamageEditors()">全て開く</button>
+                        <button type="button" class="btn simple-damage-toggle-all" onclick="collapseAllSimpleDamageEditors()">全て閉じる</button>
+                    </div>
+                    <div class="simple-damage-global-settings">
+                        <label>
+                            敵防御力
+                            <input type="number" inputmode="decimal" id="globalEnemyDefenseInput" value="0" oninput="handleGlobalEnemyDefenseInput(event)">
+                        </label>
+                        <label>
+                            受け取る鼓舞（固定値）
+                            <input type="number" step="0.01" inputmode="decimal" id="globalInspireSelfInput" value="0" oninput="handleGlobalInspireInput('self', event)">
+                        </label>
+                        <label>
+                            味方へ配る鼓舞（固定値）
+                            <input type="number" step="0.01" inputmode="decimal" id="globalInspireOthersInput" value="0" oninput="handleGlobalInspireInput('others', event)">
+                        </label>
+                    </div>
                 </div>
             </div>
 

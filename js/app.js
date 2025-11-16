@@ -1610,6 +1610,9 @@ let damageConditionToggles = {};
 let damageCharacterSearchTerm = '';
 let simpleDamageProfiles = [];
 let simpleDamageActiveProfileId = null;
+let simpleDamageEnemyDefense = 0;
+let simpleDamageInspireSelf = 0;
+let simpleDamageInspireOthers = 0;
 let simpleDamageEditorCollapsedState = {};
 let simpleRowDragState = { profileId: null, rowId: null };
 let simpleProfileDragState = { profileId: null };
@@ -3495,6 +3498,7 @@ function renderComparisonChart() {
 
 // 簡易ダメージ計算
 const SIMPLE_DAMAGE_STORAGE_KEY = 'simpleDamageProfiles';
+const SIMPLE_DAMAGE_SETTINGS_KEY = 'simpleDamageSettings';
 const ACTIVE_TAB_STORAGE_KEY = 'activeTabName';
 let simpleDamageRowIdCounter = 0;
 function generateSimpleProfileId() {
@@ -3503,6 +3507,7 @@ function generateSimpleProfileId() {
 
 function initializeSimpleDamageModule() {
     loadSimpleDamageData();
+    loadSimpleDamageSettings();
     if (simpleDamageProfiles.length === 0) {
         const profile = createDefaultSimpleDamageProfile();
         simpleDamageProfiles.push(profile);
@@ -3529,8 +3534,54 @@ function loadSimpleDamageData() {
     normalizeSimpleDamageData();
 }
 
+function loadSimpleDamageSettings() {
+    let fallbackEnemyDefense = 0;
+    const profileWithDefense = simpleDamageProfiles.find(profile => Number.isFinite(Number(profile.enemyDefense)));
+    if (profileWithDefense) {
+        fallbackEnemyDefense = Number(profileWithDefense.enemyDefense) || 0;
+    }
+
+    try {
+        const stored = localStorage.getItem(SIMPLE_DAMAGE_SETTINGS_KEY);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            simpleDamageEnemyDefense = Number(parsed.enemyDefense);
+            if (!Number.isFinite(simpleDamageEnemyDefense)) {
+                simpleDamageEnemyDefense = fallbackEnemyDefense;
+            }
+            simpleDamageInspireSelf = Number(parsed.inspireSelf);
+            if (!Number.isFinite(simpleDamageInspireSelf)) {
+                simpleDamageInspireSelf = 0;
+            }
+            simpleDamageInspireOthers = Number(parsed.inspireOthers);
+            if (!Number.isFinite(simpleDamageInspireOthers)) {
+                simpleDamageInspireOthers = 0;
+            }
+            return;
+        }
+    } catch (err) {
+        console.error('Failed to load simple damage settings', err);
+    }
+
+    simpleDamageEnemyDefense = fallbackEnemyDefense;
+    simpleDamageInspireSelf = 0;
+    simpleDamageInspireOthers = 0;
+}
+
 function saveSimpleDamageData() {
+    simpleDamageProfiles.forEach(profile => {
+        profile.enemyDefense = simpleDamageEnemyDefense;
+    });
     localStorage.setItem(SIMPLE_DAMAGE_STORAGE_KEY, JSON.stringify(simpleDamageProfiles));
+}
+
+function saveSimpleDamageSettings() {
+    const payload = {
+        enemyDefense: simpleDamageEnemyDefense,
+        inspireSelf: simpleDamageInspireSelf,
+        inspireOthers: simpleDamageInspireOthers
+    };
+    localStorage.setItem(SIMPLE_DAMAGE_SETTINGS_KEY, JSON.stringify(payload));
 }
 
 function normalizeSimpleDamageData() {
@@ -3539,6 +3590,11 @@ function normalizeSimpleDamageData() {
             const normalizedType = ['base', 'add', 'inspire', 'multiply'].includes(row.type)
                 ? row.type
                 : (row.type === '鼓舞' ? 'inspire' : (row.type === '攻撃固定' ? 'add' : 'multiply'));
+            const normalizedInspireMode = normalizedType === 'inspire'
+                ? (row.inspireMode === 'ratio' || row.inspireMode === 'fixed'
+                    ? row.inspireMode
+                    : (Math.abs(Number(row.value)) <= 10 ? 'ratio' : 'fixed'))
+                : undefined;
             return {
                 id: row.id || generateSimpleDamageRowId(),
                 label: row.label || '項目',
@@ -3550,7 +3606,8 @@ function normalizeSimpleDamageData() {
                 condition: typeof row.condition === 'string' ? row.condition : '',
                 applyInspireToSelf: normalizedType === 'inspire'
                     ? (typeof row.applyInspireToSelf === 'boolean' ? row.applyInspireToSelf : false)
-                    : undefined
+                    : undefined,
+                inspireMode: normalizedInspireMode
             };
         });
         return {
@@ -3560,6 +3617,8 @@ function normalizeSimpleDamageData() {
             enemyDefense: Number(profile.enemyDefense) || 0
         };
     });
+
+    ensureSimpleDamageEditorCollapsedState();
 }
 
 function createDefaultSimpleDamageProfile() {
@@ -3576,9 +3635,8 @@ function createDefaultSimpleDamageProfile() {
             { id: now + 5, label: '計略 与えるダメージ', type: 'multiply', value: 1, stage: 'post', disabled: false, presetKey: 'give', condition: '' },
             { id: now + 6, label: '与ダメージ', type: 'multiply', value: 1, stage: 'post', disabled: false, presetKey: 'yo', condition: '' },
             { id: now + 7, label: '被ダメージ', type: 'multiply', value: 1, stage: 'post', disabled: false, presetKey: 'hi', condition: '' },
-            { id: now + 8, label: '鼓舞（加算）', type: 'inspire', value: 0, stage: 'pre', disabled: false, applyInspireToSelf: false, presetKey: 'inspire', condition: '' },
-            { id: now + 9, label: '効果重複', type: 'multiply', value: 1, stage: 'post', disabled: false, presetKey: 'ratioDup', condition: '' },
-            { id: now + 10, label: '攻撃回数', type: 'multiply', value: 1, stage: 'post', disabled: false, presetKey: 'count', condition: '' }
+            { id: now + 8, label: '効果重複', type: 'multiply', value: 1, stage: 'post', disabled: false, presetKey: 'ratioDup', condition: '' },
+            { id: now + 9, label: '攻撃回数', type: 'multiply', value: 1, stage: 'post', disabled: false, presetKey: 'count', condition: '' }
         ]
     };
 }
@@ -3599,6 +3657,7 @@ function addSimpleDamageProfile() {
     newProfile.name = `キャラ${suffix}`;
     simpleDamageProfiles.push(newProfile);
     simpleDamageActiveProfileId = newProfile.id;
+    simpleDamageEditorCollapsedState[String(newProfile.id)] = true;
     saveSimpleDamageData();
     renderSimpleDamageTab();
 }
@@ -3653,6 +3712,7 @@ function copySimpleDamageProfile(profileId) {
     }));
     simpleDamageProfiles.push(cloned);
     simpleDamageActiveProfileId = cloned.id;
+    simpleDamageEditorCollapsedState[String(cloned.id)] = true;
     saveSimpleDamageData();
     renderSimpleDamageTab();
 }
@@ -3662,6 +3722,7 @@ function renderSimpleDamageTab(afterRenderCallback) {
         simpleDamageActiveProfileId = simpleDamageProfiles[0].id;
     }
     renderSimpleDamageProfilesSummary();
+    ensureSimpleDamageEditorCollapsedState();
     const editorsContainer = document.getElementById('simpleDamageEditorsContainer');
     if (editorsContainer) {
         editorsContainer.innerHTML = '';
@@ -3686,9 +3747,32 @@ function renderSimpleDamageTab(afterRenderCallback) {
         }
     }
 
+    syncSimpleDamageGlobalControls();
+
     if (typeof afterRenderCallback === 'function') {
         afterRenderCallback();
     }
+}
+
+function syncSimpleDamageGlobalControls() {
+    const enemyInput = document.getElementById('globalEnemyDefenseInput');
+    if (enemyInput) {
+        enemyInput.value = simpleDamageEnemyDefense || 0;
+    }
+    const inspireSelfInput = document.getElementById('globalInspireSelfInput');
+    if (inspireSelfInput) {
+        inspireSelfInput.value = simpleDamageInspireSelf || 0;
+    }
+    const inspireOthersInput = document.getElementById('globalInspireOthersInput');
+    if (inspireOthersInput) {
+        inspireOthersInput.value = simpleDamageInspireOthers || 0;
+    }
+}
+
+function formatInspireValueDisplay(value) {
+    if (!Number.isFinite(Number(value))) return '0';
+    const rounded = Math.round(Number(value) * 1000) / 1000;
+    return rounded.toString();
 }
 
 function isSimpleDamageEditorCollapsed(profileId) {
@@ -3713,6 +3797,16 @@ function setAllSimpleDamageEditorsCollapsed(collapsed) {
     simpleDamageProfiles.forEach(profile => {
         if (!profile) return;
         simpleDamageEditorCollapsedState[String(profile.id)] = target;
+    });
+}
+
+function ensureSimpleDamageEditorCollapsedState() {
+    simpleDamageProfiles.forEach(profile => {
+        if (!profile) return;
+        const key = String(profile.id);
+        if (!(key in simpleDamageEditorCollapsedState)) {
+            simpleDamageEditorCollapsedState[key] = true;
+        }
     });
 }
 
@@ -3755,10 +3849,21 @@ function renderSimpleDamageProfilesSummary() {
         const result = calculateSimpleDamage(profile);
         const formatted = formatNumber(Math.round(result.total || 0));
         const active = profile.id === simpleDamageActiveProfileId ? 'active' : '';
+        const inspireProvidedValue = Math.round(result.inspireProvided || 0);
+        const inspireSelfDamageDelta = Math.round(result.globalSelfDamageDelta || (calculateGlobalSelfDamageDelta(profile) || 0));
+        const inspireBadges = [];
+        if (inspireProvidedValue > 0) {
+            inspireBadges.push(`<span class="simple-damage-badge">味方 +${formatNumber(inspireProvidedValue)}</span>`);
+        }
+        inspireBadges.push(`<span class="simple-damage-badge simple-damage-badge-self">鼓舞ダメ +${formatNumber(inspireSelfDamageDelta)}</span>`);
+        const inspireBadge = inspireBadges.length > 0
+            ? `<div class="simple-damage-card-inspire">${inspireBadges.join(' ')}</div>`
+            : '';
         return `
             <div class="simple-damage-card ${active}" draggable="true" ondragstart="startProfileDrag(event, ${profile.id})" ondragend="endProfileDrag(event)">
                 <h3>${profile.name}</h3>
                 <div class="result-value" id="simpleDamageCardResult-${profile.id}">${formatted}</div>
+                ${inspireBadge}
                 <div class="simple-damage-card-actions">
                     <button class="btn" onclick="selectSimpleDamageProfile(${profile.id}, { scroll: true })">編集</button>
                     <button class="btn" onclick="renameSimpleDamageProfile(${profile.id})">名称変更</button>
@@ -3817,6 +3922,12 @@ function renderSimpleDamageEditor(profileId = null, containerOverride = null) {
                         自身に適用
                    </label>`
                 : '';
+            const inspireModeSelect = row.type === 'inspire'
+                ? `<select class="simple-damage-inline-select" onchange="updateSimpleRowField(${profile.id}, ${row.id}, 'inspireMode', this.value)">
+                        <option value="fixed" ${row.inspireMode !== 'ratio' ? 'selected' : ''}>固定値</option>
+                        <option value="ratio" ${row.inspireMode === 'ratio' ? 'selected' : ''}>割合</option>
+                   </select>`
+                : '';
             const labelInput = row.presetKey
                 ? ''
                 : `<input type="text" class="simple-damage-inline-input simple-row-label-input" data-profile-id="${profile.id}" data-row-id="${row.id}" data-field="label" value="${escapeHtml(row.label || '')}" oninput="updateSimpleRowField(${profile.id}, ${row.id}, 'label', this.value)">`;
@@ -3831,6 +3942,7 @@ function renderSimpleDamageEditor(profileId = null, containerOverride = null) {
                             ${typeSelect}
                             ${stageSelect}
                             ${inspireToggle}
+                            ${inspireModeSelect}
                         </div>
                     </td>
                     <td>${valueInput}</td>
@@ -3874,19 +3986,24 @@ function renderSimpleDamageEditor(profileId = null, containerOverride = null) {
         container.classList.remove('collapsed');
     }
 
+    const globalInspireSummary = `
+        <div class="simple-damage-global-summary">
+            <span>受け取る鼓舞(固定値): ${formatInspireValueDisplay(simpleDamageInspireSelf)}</span>
+            <span>味方へ配る鼓舞(固定値): ${formatInspireValueDisplay(simpleDamageInspireOthers)}</span>
+        </div>
+    `;
+
     container.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 10px;">
             <div>
                 <h3 style="margin: 0;">${profile.name}</h3>
-                <label style="font-size: 12px; color: #555;">敵防御力
-                    <input type="number" id="enemyDefenseInput-${profile.id}" class="simple-damage-inline-input" style="max-width: 120px; margin-left: 8px;" value="${profile.enemyDefense || 0}" oninput="handleEnemyDefenseInput(${profile.id}, event)">
-                </label>
             </div>
             <div class="simple-damage-header-actions">
                 <button class="simple-damage-icon-button" type="button" onclick="toggleSimpleDamageEditor(${profile.id})" aria-label="${toggleAriaLabel}" title="${toggleAriaLabel}">${toggleIcon}</button>
                 <button class="simple-damage-icon-button" type="button" onclick="addSimpleRow(${profile.id})" aria-label="${addRowAriaLabel}" title="${addRowAriaLabel}">＋</button>
             </div>
         </div>
+        ${globalInspireSummary}
         <div id="simpleDamageResult-${profile.id}">
             ${resultHtml}
         </div>
@@ -3898,14 +4015,26 @@ function renderSimpleDamageEditor(profileId = null, containerOverride = null) {
 
 function buildSimpleDamageResultHTML(profile, result) {
     const totalDisplay = formatNumber(Math.round(result.total || 0));
-    const inspireBonus = Math.round(result.inspireProvided || result.inspire || 0);
-    const inspireInfo = inspireBonus > 0
-        ? `<div class="simple-damage-inspire-info">鼓舞加算: ${formatNumber(inspireBonus)}</div>`
+    const inspireProvided = Math.round(result.inspireProvided || 0);
+    const inspireSelfDamageDelta = Math.round(result.globalSelfDamageDelta || (calculateGlobalSelfDamageDelta(profile) || 0));
+    const badges = [];
+    if (inspireProvided > 0) {
+        badges.push(`<span class="simple-damage-badge">味方 +${formatNumber(inspireProvided)}</span>`);
+    }
+    badges.push(`<span class="simple-damage-badge simple-damage-badge-self">鼓舞ダメ +${formatNumber(inspireSelfDamageDelta)}</span>`);
+    const inspireInfo = badges.length > 0
+        ? `<div class="simple-damage-inspire-info">${badges.join(' ')}</div>`
         : '';
     return `
         <div class="simple-damage-result-bar">${totalDisplay} ダメージ</div>
         ${inspireInfo}
     `;
+}
+
+function calculateGlobalSelfDamageDelta(profile) {
+    const current = calculateSimpleDamageInternal(profile, { excludeGlobalSelfInspire: false });
+    const baseline = calculateSimpleDamageInternal(profile, { excludeGlobalSelfInspire: true });
+    return (current.total || 0) - (baseline.total || 0);
 }
 
 function updateSimpleDamageResultView(profile, result) {
@@ -3957,6 +4086,13 @@ function updateSimpleRowField(profileId, rowId, field, value) {
         if (value !== 'multiply') {
             row.stage = 'pre';
         }
+        if (value === 'inspire') {
+            row.applyInspireToSelf = !!row.applyInspireToSelf;
+            row.inspireMode = row.inspireMode === 'ratio' ? 'ratio' : 'fixed';
+        } else {
+            delete row.applyInspireToSelf;
+            delete row.inspireMode;
+        }
         normalizeSimpleRowStage(row);
     } else if (field === 'value') {
         let parsed = parseFloat(value);
@@ -3968,6 +4104,10 @@ function updateSimpleRowField(profileId, rowId, field, value) {
         row.stage = value === 'post' ? 'post' : 'pre';
     } else if (field === 'applyInspireToSelf') {
         row.applyInspireToSelf = !!value;
+        shouldRerender = true;
+    } else if (field === 'inspireMode') {
+        const normalizedMode = value === 'ratio' ? 'ratio' : 'fixed';
+        row.inspireMode = normalizedMode;
         shouldRerender = true;
     } else if (field === 'condition') {
         row.condition = value || '';
@@ -3999,6 +4139,10 @@ function applySimpleRowPreset(profileId, rowId, presetKey) {
     row.condition = '';
     if (preset.type === 'inspire') {
         row.applyInspireToSelf = false;
+        row.inspireMode = 'fixed';
+    } else {
+        delete row.applyInspireToSelf;
+        delete row.inspireMode;
     }
     normalizeSimpleRowStage(row);
     saveSimpleDamageData();
@@ -4014,8 +4158,24 @@ function focusSimpleRowLabel(profileId, rowId) {
     }
 }
 
-function focusEnemyDefenseInput(profileId, caretPos = null) {
-    const input = document.getElementById(`enemyDefenseInput-${profileId}`);
+function handleGlobalEnemyDefenseInput(event) {
+    const caretPos = event?.target?.selectionStart ?? null;
+    updateSimpleDamageEnemyDefense(event.target.value, caretPos);
+}
+
+function updateSimpleDamageEnemyDefense(value, caretPos = null) {
+    const parsed = parseFloat(value);
+    simpleDamageEnemyDefense = Number.isFinite(parsed) ? parsed : 0;
+    simpleDamageProfiles.forEach(profile => {
+        profile.enemyDefense = simpleDamageEnemyDefense;
+    });
+    saveSimpleDamageSettings();
+    saveSimpleDamageData();
+    renderSimpleDamageTab(() => focusGlobalEnemyDefenseInput(caretPos));
+}
+
+function focusGlobalEnemyDefenseInput(caretPos = null) {
+    const input = document.getElementById('globalEnemyDefenseInput');
     if (!input) return;
     const length = input.value.length;
     const pos = caretPos === null ? length : Math.max(0, Math.min(caretPos, length));
@@ -4023,16 +4183,31 @@ function focusEnemyDefenseInput(profileId, caretPos = null) {
     input.setSelectionRange(pos, pos);
 }
 
-function updateSimpleProfileDefense(profileId, value, caretPos = null) {
-    const profile = simpleDamageProfiles.find(p => p.id === profileId);
-    if (!profile) return;
+function handleGlobalInspireInput(type, event) {
+    const caretPos = event?.target?.selectionStart ?? null;
+    updateSimpleDamageGlobalInspire(type, event.target.value, caretPos);
+}
+
+function updateSimpleDamageGlobalInspire(type, value, caretPos = null) {
     const parsed = parseFloat(value);
-    profile.enemyDefense = Number.isFinite(parsed) ? parsed : 0;
-    saveSimpleDamageData();
-    const result = calculateSimpleDamage(profile);
-    updateSimpleDamageSummaryValue(profile, result);
-    updateSimpleDamageResultView(profile, result);
-    focusEnemyDefenseInput(profileId, caretPos);
+    const safeValue = Number.isFinite(parsed) ? parsed : 0;
+    if (type === 'self') {
+        simpleDamageInspireSelf = safeValue;
+    } else {
+        simpleDamageInspireOthers = safeValue;
+    }
+    saveSimpleDamageSettings();
+    renderSimpleDamageTab(() => focusGlobalInspireInput(type, caretPos));
+}
+
+function focusGlobalInspireInput(type, caretPos = null) {
+    const inputId = type === 'self' ? 'globalInspireSelfInput' : 'globalInspireOthersInput';
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const length = input.value.length;
+    const pos = caretPos === null ? length : Math.max(0, Math.min(caretPos, length));
+    input.focus();
+    input.setSelectionRange(pos, pos);
 }
 
 function scrollToSimpleDamageEditor(profileId) {
@@ -4214,22 +4389,28 @@ function clearSimpleRowDragState() {
     simpleRowDragState = { profileId: null, rowId: null };
 }
 
-function handleEnemyDefenseInput(profileId, event) {
-    const caretPos = event?.target?.selectionStart ?? null;
-    updateSimpleProfileDefense(profileId, event.target.value, caretPos);
+function calculateSimpleDamage(profile) {
+    const result = calculateSimpleDamageInternal(profile, { excludeGlobalSelfInspire: false });
+    const baseline = calculateSimpleDamageInternal(profile, { excludeGlobalSelfInspire: true });
+    result.globalSelfDamageDelta = (result.total || 0) - (baseline.total || 0);
+    return result;
 }
 
-function calculateSimpleDamage(profile) {
+function calculateSimpleDamageInternal(profile, options = {}) {
     if (!profile) {
         return { total: 0, base: 0, add: 0, inspire: 0, inspireProvided: 0 };
     }
     const rows = profile.rows || [];
     let baseValue = 0;
     let attackAddTotal = 0;
-    const receivedInspireRatios = [];
-    const providedInspireRatios = [];
+    const excludeGlobalSelfInspire = !!options.excludeGlobalSelfInspire;
+    let selfFixedInspire = excludeGlobalSelfInspire ? 0 : (Number(simpleDamageInspireSelf) || 0);
+    let providedFixedInspire = Number(simpleDamageInspireOthers) || 0;
+    let selfRatioInspireTotal = 0;
+    let providedRatioInspireTotal = 0;
     const attackRatioMultipliers = [];
     const ratioMultipliers = [];
+    const duplicationMultipliers = [];
     const giveDamageMultipliers = [];
     const yoDamageMultipliers = [];
     const hiDamageMultipliers = [];
@@ -4249,14 +4430,23 @@ function calculateSimpleDamage(profile) {
                 attackAddTotal += value;
                 break;
             case 'inspire':
-                if (row.applyInspireToSelf) {
-                    receivedInspireRatios.push(value);
+                if (row.inspireMode === 'ratio') {
+                    if (row.applyInspireToSelf) {
+                        selfRatioInspireTotal += value;
+                    } else {
+                        providedRatioInspireTotal += value;
+                    }
                 } else {
-                    providedInspireRatios.push(value);
+                    if (row.applyInspireToSelf) {
+                        selfFixedInspire += value;
+                    } else {
+                        providedFixedInspire += value;
+                    }
                 }
                 break;
             case 'multiply': {
                 const label = row.label || '';
+                const isDuplication = row.presetKey === 'ratioDup' || /効果重複/.test(label);
                 if (SIMPLE_DAMAGE_SPECIAL_MULTIPLIER_REGEX.give.test(label)) {
                     giveDamageMultipliers.push(value);
                 } else if (SIMPLE_DAMAGE_SPECIAL_MULTIPLIER_REGEX.yo.test(label)) {
@@ -4267,6 +4457,9 @@ function calculateSimpleDamage(profile) {
                     attackCountMultipliers.push(value);
                 } else if (row.stage === 'post') {
                     ratioMultipliers.push(value);
+                    if (isDuplication) {
+                        duplicationMultipliers.push(value);
+                    }
                 } else {
                     attackRatioMultipliers.push(value);
                 }
@@ -4279,25 +4472,24 @@ function calculateSimpleDamage(profile) {
 
     const attackRatioProduct = multiplyValues(attackRatioMultipliers);
     const ratioDupProduct = multiplyValues(ratioMultipliers || []);
+    const duplicationProduct = duplicationMultipliers.length ? multiplyValues(duplicationMultipliers) : 1;
     const giveDamageProduct = multiplyValues(giveDamageMultipliers || []);
     const yoDamageProduct = multiplyValues(yoDamageMultipliers || []);
     const hiDamageProduct = multiplyValues(hiDamageMultipliers || []);
     const attackCountProduct = multiplyValues(attackCountMultipliers || []);
 
-    const attackValueBase = baseValue * attackRatioProduct + attackAddTotal;
-    const attackValueBeforeInspire = attackValueBase * ratioDupProduct;
-    const receivedRatioTotal = receivedInspireRatios.reduce((sum, ratio) => sum + ratio, 0);
-    const providedRatioTotal = providedInspireRatios.reduce((sum, ratio) => sum + ratio, 0);
-    const receivedContributionBase = attackValueBase * receivedRatioTotal;
-    const inspireDisplayValue = attackValueBeforeInspire * providedRatioTotal;
-
-    let attackValue = attackValueBeforeInspire;
-    if (ratioDupProduct > 1 && receivedContributionBase > 0) {
-        attackValue = (attackValueBase + receivedContributionBase * (ratioDupProduct - 1)) * ratioDupProduct;
-    }
+    const attackBaseBeforeSelfInspire = baseValue * attackRatioProduct + attackAddTotal;
+    const selfRatioContribution = attackBaseBeforeSelfInspire * selfRatioInspireTotal;
+    const duplicationIncrease = duplicationProduct > 1
+        ? selfFixedInspire * (duplicationProduct - 1)
+        : 0;
+    const effectiveSelfFixedInspire = selfFixedInspire + duplicationIncrease;
+    const attackValueBeforePostMultipliers = (attackBaseBeforeSelfInspire + effectiveSelfFixedInspire + selfRatioContribution) * ratioDupProduct;
+    const providedRatioBase = (attackBaseBeforeSelfInspire + duplicationIncrease + selfRatioContribution) * ratioDupProduct;
+    const attackValue = attackValueBeforePostMultipliers;
 
     const afterGiveDamage = attackValue * giveDamageProduct;
-    const enemyDefense = Number(profile.enemyDefense) || 0;
+    const enemyDefense = Number(simpleDamageEnemyDefense) || 0;
     const damageAfterDefense = Math.max(afterGiveDamage - enemyDefense, 0);
 
     let total = damageAfterDefense;
@@ -4305,12 +4497,17 @@ function calculateSimpleDamage(profile) {
     total *= hiDamageProduct;
     total *= attackCountProduct;
 
+    const providedFixedEffective = providedFixedInspire;
+    const providedRatioContribution = providedRatioBase * providedRatioInspireTotal;
+    const providedInspireValue = providedFixedEffective + providedRatioContribution;
+    const inspireSelfTotal = effectiveSelfFixedInspire + selfRatioContribution;
+
     return {
         total,
         base: baseValue,
         add: attackAddTotal,
-        inspire: inspireDisplayValue,
-        inspireProvided: inspireDisplayValue,
+        inspire: inspireSelfTotal,
+        inspireProvided: providedInspireValue,
         attackRatioMultipliers,
         ratioMultipliers,
         giveDamageMultipliers,
