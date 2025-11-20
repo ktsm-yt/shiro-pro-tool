@@ -2,10 +2,11 @@
   "name": "shiro-pro-tool",
   "version": "1.0.0",
   "description": "城プロのキャラクター管理と編成作成のためのWebアプリケーション",
-  "main": "index.html",
   "scripts": {
-    "start": "python3 -m http.server 8000",
-    "open": "open http://localhost:8000"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite preview"
   },
   "keywords": [
     "shiro-pro",
@@ -13,5 +14,8 @@
     "character-management"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^7.2.4"
+  }
 }

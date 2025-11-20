@@ -11,3 +11,7 @@ data/formations.json
 
 # ログ
 *.log
+
+# ビルド/依存
+node_modules/
+dist/
